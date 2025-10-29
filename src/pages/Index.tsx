@@ -8,14 +8,14 @@ import { toast } from "sonner";
 import teamPhoto from "@/assets/team-photo.jpeg";
 
 const drumSounds: DrumSound[] = [
-  { id: "1", name: "Kick", type: "kick", frequency: 150, color: "bg-primary" },
-  { id: "2", name: "Snare", type: "snare", frequency: 200, color: "bg-secondary" },
-  { id: "3", name: "Hi-Hat", type: "hihat", frequency: 10000, color: "bg-accent" },
-  { id: "4", name: "Clap", type: "clap", frequency: 1000, color: "bg-orange" },
-  { id: "5", name: "Tom", type: "tom", frequency: 220, color: "bg-primary/80" },
-  { id: "6", name: "Cymbal", type: "cymbal", frequency: 8000, color: "bg-secondary/80" },
-  { id: "7", name: "Cowbell", type: "cowbell", frequency: 800, color: "bg-accent/80" },
-  { id: "8", name: "Rim", type: "rim", frequency: 400, color: "bg-orange/80" },
+  { id: "1", name: "C", type: "kick", frequency: 261.63, color: "bg-white" },
+  { id: "2", name: "C#", type: "snare", frequency: 277.18, color: "bg-black" },
+  { id: "3", name: "D", type: "hihat", frequency: 293.66, color: "bg-white" },
+  { id: "4", name: "D#", type: "clap", frequency: 311.13, color: "bg-black" },
+  { id: "5", name: "E", type: "tom", frequency: 329.63, color: "bg-white" },
+  { id: "6", name: "F", type: "cymbal", frequency: 349.23, color: "bg-white" },
+  { id: "7", name: "F#", type: "cowbell", frequency: 369.99, color: "bg-black" },
+  { id: "8", name: "G", type: "rim", frequency: 392.00, color: "bg-white" },
 ];
 
 const Index = () => {
@@ -30,7 +30,7 @@ const Index = () => {
   const handlePlaySound = useCallback((soundId: string) => {
     const sound = drumSounds.find((s) => s.id === soundId);
     if (sound) {
-      playSound(sound.type);
+      playSound(sound.type, sound.frequency);
     }
   }, [playSound]);
 
@@ -60,7 +60,7 @@ const Index = () => {
         // Play sounds for active steps
         drumSounds.forEach((sound, soundIndex) => {
           if (steps[soundIndex]?.[nextStep]) {
-            playSound(sound.type);
+            playSound(sound.type, sound.frequency);
           }
         });
         
@@ -92,10 +92,10 @@ const Index = () => {
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         <header className="text-center space-y-4 animate-slide-up">
           <h1 className="text-5xl sm:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Beat Maker
+            Piano Maker
           </h1>
           <p className="text-muted-foreground text-lg">
-            Crea ritmos increíbles tocando los pads o usando el secuenciador
+            Crea melodías increíbles tocando las teclas o usando el secuenciador
           </p>
         </header>
 

@@ -1,5 +1,5 @@
 import { DrumSound } from "@/types/audio";
-import { DrumPad } from "./DrumPad";
+import { PianoKey } from "./PianoKey";
 
 interface DrumGridProps {
   sounds: DrumSound[];
@@ -7,15 +7,20 @@ interface DrumGridProps {
 }
 
 export const DrumGrid = ({ sounds, onPlaySound }: DrumGridProps) => {
+  const blackKeys = [1, 3, 5, 6]; // indices of black keys (simulating sharps/flats)
+  
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4 animate-slide-up">
-      {sounds.map((sound) => (
-        <DrumPad
-          key={sound.id}
-          sound={sound}
-          onPlay={() => onPlaySound(sound.id)}
-        />
-      ))}
+    <div className="flex justify-center items-end p-8 animate-slide-up">
+      <div className="relative flex items-end">
+        {sounds.map((sound, index) => (
+          <PianoKey
+            key={sound.id}
+            sound={sound}
+            onPlay={() => onPlaySound(sound.id)}
+            isBlack={blackKeys.includes(index)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
