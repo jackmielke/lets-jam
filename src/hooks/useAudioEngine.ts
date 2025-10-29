@@ -21,21 +21,20 @@ export const useAudioEngine = () => {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Piano-like sound with sine wave
-    oscillator.type = "sine";
+    // Mario Bros 8-bit sound with square wave
+    oscillator.type = "square";
     
     // Use frequency from the note definition
     const noteFreq = frequency || 261.63;
     oscillator.frequency.setValueAtTime(noteFreq, currentTime);
     
-    // ADSR envelope for piano-like sound
+    // Short, punchy envelope for 8-bit sound
     gainNode.gain.setValueAtTime(0, currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.01); // Attack
-    gainNode.gain.exponentialRampToValueAtTime(0.2, currentTime + 0.1); // Decay
-    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 1); // Release
+    gainNode.gain.linearRampToValueAtTime(0.4, currentTime + 0.005); // Fast attack
+    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.15); // Quick decay
 
     oscillator.start(currentTime);
-    oscillator.stop(currentTime + 1);
+    oscillator.stop(currentTime + 0.15);
   }, [getAudioContext]);
 
   return { playSound };
