@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play, Pause, RotateCcw, Music } from "lucide-react";
 
 interface ControlsProps {
   isPlaying: boolean;
@@ -10,6 +10,10 @@ interface ControlsProps {
 }
 
 export const Controls = ({ isPlaying, onPlayPause, onClear, tempo, onTempoChange }: ControlsProps) => {
+  const handlePlayPrettyGirl = () => {
+    window.open("https://www.youtube.com/watch?v=QdBEcjRKLi0", "_blank");
+  };
+
   return (
     <div className="flex flex-wrap items-center justify-center gap-4 p-4 bg-card rounded-xl border border-border animate-slide-up">
       <Button
@@ -38,6 +42,15 @@ export const Controls = ({ isPlaying, onPlayPause, onClear, tempo, onTempoChange
       >
         <RotateCcw className="mr-2 h-5 w-5" />
         Clear
+      </Button>
+
+      <Button
+        onClick={handlePlayPrettyGirl}
+        size="lg"
+        className="bg-gradient-secondary hover:brightness-110 transition-all"
+      >
+        <Music className="mr-2 h-5 w-5" />
+        Pretty Girl
       </Button>
 
       <div className="flex items-center gap-3 ml-4">
