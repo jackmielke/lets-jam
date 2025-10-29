@@ -5,6 +5,7 @@ import { Sequencer } from "@/components/Sequencer";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { DrumSound } from "@/types/audio";
 import { toast } from "sonner";
+import teamPhoto from "@/assets/team-photo.jpeg";
 
 const drumSounds: DrumSound[] = [
   { id: "1", name: "Kick", type: "kick", frequency: 150, color: "bg-primary" },
@@ -80,8 +81,15 @@ const Index = () => {
   }, [isPlaying]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 relative overflow-hidden">
+      {/* Subtle background photo */}
+      <div 
+        className="fixed inset-0 z-0 opacity-[0.03] bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${teamPhoto})` }}
+      />
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-background/95 via-background/90 to-background/95" />
+      
+      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         <header className="text-center space-y-4 animate-slide-up">
           <h1 className="text-5xl sm:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             Beat Maker
