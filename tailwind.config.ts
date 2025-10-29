@@ -27,6 +27,14 @@ export default {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        orange: {
+          DEFAULT: "hsl(var(--orange))",
+          foreground: "hsl(var(--orange-foreground))",
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -34,10 +42,6 @@ export default {
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -57,6 +61,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      backgroundImage: {
+        "gradient-primary": "var(--gradient-primary)",
+        "gradient-secondary": "var(--gradient-secondary)",
+        "gradient-accent": "var(--gradient-accent)",
+      },
+      boxShadow: {
+        "glow-primary": "var(--glow-primary)",
+        "glow-secondary": "var(--glow-secondary)",
+        "glow-accent": "var(--glow-accent)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -80,10 +94,25 @@ export default {
             height: "0",
           },
         },
+        pulse: {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(0.95)", opacity: "0.8" },
+        },
+        glow: {
+          "0%, 100%": { filter: "brightness(1)" },
+          "50%": { filter: "brightness(1.3)" },
+        },
+        "slide-up": {
+          from: { transform: "translateY(10px)", opacity: "0" },
+          to: { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        pulse: "pulse 0.15s ease-out",
+        glow: "glow 0.3s ease-out",
+        "slide-up": "slide-up 0.4s ease-out",
       },
     },
   },
