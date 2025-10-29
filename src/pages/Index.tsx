@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DrumGrid } from "@/components/DrumGrid";
 import { Controls } from "@/components/Controls";
 import { Sequencer } from "@/components/Sequencer";
+import { DancingCharacter } from "@/components/DancingCharacter";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { DrumSound } from "@/types/audio";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isDancing, setIsDancing] = useState(false);
   const [steps, setSteps] = useState<boolean[][]>(
     drumSounds.map(() => Array(16).fill(false))
   );
@@ -31,6 +33,8 @@ const Index = () => {
     const sound = drumSounds.find((s) => s.id === soundId);
     if (sound) {
       playSound(sound.type);
+      setIsDancing(true);
+      setTimeout(() => setIsDancing(false), 500);
     }
   }, [playSound]);
 
@@ -61,6 +65,8 @@ const Index = () => {
         drumSounds.forEach((sound, soundIndex) => {
           if (steps[soundIndex]?.[nextStep]) {
             playSound(sound.type);
+            setIsDancing(true);
+            setTimeout(() => setIsDancing(false), 500);
           }
         });
         
@@ -106,6 +112,8 @@ const Index = () => {
           tempo={tempo}
           onTempoChange={setTempo}
         />
+
+        <DancingCharacter isDancing={isDancing} />
 
         <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} />
 
