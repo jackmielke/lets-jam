@@ -4,9 +4,10 @@ import { PianoKey } from "./PianoKey";
 interface DrumGridProps {
   sounds: DrumSound[];
   onPlaySound: (soundId: string) => void;
+  pressedKeyId: string | null;
 }
 
-export const DrumGrid = ({ sounds, onPlaySound }: DrumGridProps) => {
+export const DrumGrid = ({ sounds, onPlaySound, pressedKeyId }: DrumGridProps) => {
   // Identify which keys are black (sharps/flats)
   const isBlackKey = (sound: DrumSound) => sound.color === "bg-black";
   
@@ -19,6 +20,7 @@ export const DrumGrid = ({ sounds, onPlaySound }: DrumGridProps) => {
             sound={sound}
             onPlay={() => onPlaySound(sound.id)}
             isBlack={isBlackKey(sound)}
+            isPressed={pressedKeyId === sound.id}
           />
         ))}
       </div>

@@ -57,6 +57,7 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
   const [currentStep, setCurrentStep] = useState(0);
+  const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
   const [steps, setSteps] = useState<boolean[][]>(
     drumSounds.map(() => Array(16).fill(false))
   );
@@ -65,6 +66,8 @@ const Index = () => {
     const sound = drumSounds.find((s) => s.id === soundId);
     if (sound) {
       playSound(sound.type, sound.frequency);
+      setPressedKeyId(soundId);
+      setTimeout(() => setPressedKeyId(null), 200);
     }
   }, [playSound]);
 
@@ -147,7 +150,7 @@ const Index = () => {
           onTempoChange={setTempo}
         />
 
-        <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} />
+        <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
 
         <Sequencer
           sounds={drumSounds}
