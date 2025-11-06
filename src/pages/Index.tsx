@@ -167,14 +167,23 @@ const Index = () => {
   });
 
   const handleDemonstrateLick = useCallback((lick: Lick) => {
+    // Start metronome if not playing
     if (!metronome.isPlaying) {
-      toast.error("Start the metronome first!");
-      return;
+      metronome.start();
+      // Wait one full bar (4 beats) before playing the lick
+      const beatDuration = (60 / metronomeBpm) * 1000;
+      const oneBarDelay = beatDuration * 4;
+      
+      toast.success(`Demonstrating: ${lick.name} (starting in 4 beats)`);
+      
+      setTimeout(() => {
+        playLick(lick);
+      }, oneBarDelay);
+    } else {
+      toast.success(`Demonstrating: ${lick.name}`);
+      playLick(lick);
     }
-    
-    toast.success(`Demonstrating: ${lick.name}`);
-    playLick(lick);
-  }, [playLick, metronome.isPlaying]);
+  }, [playLick, metronome, metronomeBpm]);
 
   const handleToggleStep = useCallback((soundIndex: number, stepIndex: number) => {
     setSteps((prev) => {
