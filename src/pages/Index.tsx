@@ -7,10 +7,12 @@ import { RecordingDisplay } from "@/components/RecordingDisplay";
 import { LickLibrary } from "@/components/LickLibrary";
 import { LickEditor } from "@/components/LickEditor";
 import { LickSequencer } from "@/components/LickSequencer";
+import { ScoreDisplay } from "@/components/ScoreDisplay";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
 import { useLickPlayback } from "@/hooks/useLickPlayback";
+import { useLickRecognition } from "@/hooks/useLickRecognition";
 import { DrumSound } from "@/types/audio";
 import { RecordedNote } from "@/types/recording";
 import { Lick } from "@/types/lick";
@@ -238,6 +240,20 @@ const Index = () => {
     bpm: metronomeBpm
   });
 
+  // Lick recognition
+  const { totalScore, recentRecognition, resetScore } = useLickRecognition({
+    licks,
+    recordedNotes,
+    isRecording: metronome.isPlaying,
+    beatDuration: metronome.beatDuration,
+    onLickRecognized: (result) => {
+      toast.success(
+        `🎯 ${result.lick.name} recognized! +${result.points} points (${Math.round(result.accuracy)}% accuracy)`,
+        { duration: 3000 }
+      );
+    }
+  });
+
   const handleDemonstrateLick = useCallback((lick: Lick) => {
     // Start metronome if not playing
     if (!metronome.isPlaying) {
@@ -383,8 +399,8 @@ const Index = () => {
           </p>
         </header>
 
-        {/* Metronome & Recording */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Metronome, Recording & Score */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Metronome
             isPlaying={metronome.isPlaying}
             currentBeat={metronome.currentBeat}
@@ -426,6 +442,11 @@ const Index = () => {
               </div>
             )}
           </div>
+          <ScoreDisplay 
+            score={totalScore}
+            recentRecognition={recentRecognition}
+            onReset={resetScore}
+          />
         </div>
 
         {/* Lick Editor */}
