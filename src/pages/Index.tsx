@@ -2,9 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { DrumGrid } from "@/components/DrumGrid";
 import { Controls } from "@/components/Controls";
 import { Sequencer } from "@/components/Sequencer";
+import { Metronome } from "@/components/Metronome";
+import { RecordingDisplay } from "@/components/RecordingDisplay";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
+import { useMetronome } from "@/hooks/useMetronome";
 import { DrumSound } from "@/types/audio";
+import { RecordedNote } from "@/types/recording";
 import { toast } from "sonner";
 import teamPhoto from "@/assets/team-photo.jpeg";
 
@@ -56,11 +60,19 @@ const Index = () => {
   const { playSound } = useAudioEngine();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
+  const [metronomeBpm, setMetronomeBpm] = useState(120);
   const [currentStep, setCurrentStep] = useState(0);
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
+  const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
   const [steps, setSteps] = useState<boolean[][]>(
     drumSounds.map(() => Array(16).fill(false))
   );
+
+  // Metronome for rhythm tracking
+  const metronome = useMetronome({
+    bpm: metronomeBpm,
+    beatsPerBar: 4
+  });
 
   const handlePlaySound = useCallback((soundId: string) => {
     const sound = drumSounds.find((s) => s.id === soundId);
@@ -68,14 +80,38 @@ const Index = () => {
       playSound(sound.type, sound.frequency);
       setPressedKeyId(soundId);
       setTimeout(() => setPressedKeyId(null), 200);
+
+      // Record note if metronome is playing
+      if (metronome.isPlaying) {
+        const timestamp = Date.now();
+        const beatInfo = metronome.getBeatAtTimestamp(timestamp);
+        const accuracy = metronome.getTimingAccuracy(timestamp);
+
+        const recordedNote: RecordedNote = {
+          soundId: sound.id,
+          noteName: sound.name,
+          timestamp,
+          beatNumber: beatInfo.beatNumber,
+          subdivision: beatInfo.subdivision,
+          offsetMs: accuracy.offsetMs,
+          accuracy: accuracy.accuracy
+        };
+
+        setRecordedNotes(prev => [...prev, recordedNote]);
+      }
     }
-  }, [playSound]);
+  }, [playSound, metronome]);
 
   // Enable keyboard mapping
   useKeyboardMapping({ 
     onKeyPress: handlePlaySound,
     enabled: true 
   });
+
+  const handleClearRecording = useCallback(() => {
+    setRecordedNotes([]);
+    toast.success("Recording cleared!");
+  }, []);
 
   const handleToggleStep = useCallback((soundIndex: number, stepIndex: number) => {
     setSteps((prev) => {
@@ -142,22 +178,42 @@ const Index = () => {
           </p>
         </header>
 
-        <Controls
-          isPlaying={isPlaying}
-          onPlayPause={handlePlayPause}
-          onClear={handleClear}
-          tempo={tempo}
-          onTempoChange={setTempo}
-        />
+        {/* Metronome & Recording */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Metronome
+            isPlaying={metronome.isPlaying}
+            currentBeat={metronome.currentBeat}
+            beatsPerBar={4}
+            bpm={metronomeBpm}
+            onToggle={metronome.toggle}
+            onBpmChange={setMetronomeBpm}
+          />
+          <RecordingDisplay 
+            notes={recordedNotes}
+            isRecording={metronome.isPlaying}
+          />
+        </div>
 
         <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
 
-        <Sequencer
-          sounds={drumSounds}
-          steps={steps}
-          currentStep={currentStep}
-          onToggleStep={handleToggleStep}
-        />
+        {/* Sequencer Controls */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-center">Pattern Sequencer</h3>
+          <Controls
+            isPlaying={isPlaying}
+            onPlayPause={handlePlayPause}
+            onClear={handleClear}
+            tempo={tempo}
+            onTempoChange={setTempo}
+          />
+
+          <Sequencer
+            sounds={drumSounds}
+            steps={steps}
+            currentStep={currentStep}
+            onToggleStep={handleToggleStep}
+          />
+        </div>
       </div>
     </div>
   );
