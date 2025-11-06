@@ -72,7 +72,7 @@ const drumSounds: DrumSound[] = [
 ];
 
 const Index = () => {
-  const { playSound } = useAudioEngine();
+  const { playSound, instrumentType, setInstrumentType } = useAudioEngine();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
   const [metronomeBpm, setMetronomeBpm] = useState(120);
@@ -403,6 +403,38 @@ const Index = () => {
           <p className="text-muted-foreground text-lg">
             Play using your keyboard: <span className="font-mono font-bold">ASDFGHJKL;'</span> for white keys, <span className="font-mono font-bold">WETUI O</span> for black keys
           </p>
+          
+          {/* Instrument Selector */}
+          <div className="flex justify-center gap-2 flex-wrap">
+            <Button
+              variant={instrumentType === "roblox" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("roblox")}
+            >
+              Roblox
+            </Button>
+            <Button
+              variant={instrumentType === "synth" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("synth")}
+            >
+              Synth
+            </Button>
+            <Button
+              variant={instrumentType === "organ" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("organ")}
+            >
+              Church Organ
+            </Button>
+            <Button
+              variant={instrumentType === "guitar" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("guitar")}
+            >
+              Electric Guitar
+            </Button>
+          </div>
         </header>
 
         {/* Metronome, Recording & Score */}
