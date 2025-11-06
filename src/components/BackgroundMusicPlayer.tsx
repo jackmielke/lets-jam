@@ -15,13 +15,15 @@ interface MusicFile {
 
 interface BackgroundMusicPlayerProps {
   refreshTrigger: number;
+  metronomeBpm: number;
 }
 
-export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerProps) => {
+export const BackgroundMusicPlayer = ({ refreshTrigger, metronomeBpm }: BackgroundMusicPlayerProps) => {
   const [musicFiles, setMusicFiles] = useState<MusicFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([70]);
+  const [referenceBpm, setReferenceBpm] = useState(120);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const loadMusicFiles = async () => {
@@ -61,6 +63,12 @@ export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerP
       audioRef.current.volume = volume[0] / 100;
     }
   }, [volume]);
+
+  useEffect(() => {
+    if (audioRef.current && referenceBpm > 0) {
+      audioRef.current.playbackRate = metronomeBpm / referenceBpm;
+    }
+  }, [metronomeBpm, referenceBpm]);
 
   const handlePlay = () => {
     if (!selectedFile) {
@@ -134,30 +142,49 @@ export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerP
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handlePlay}
-            disabled={!selectedFile}
-          >
-            {isPlaying ? (
-              <Pause className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-          </Button>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePlay}
+              disabled={!selectedFile}
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+            </Button>
 
-          <div className="flex items-center gap-2 flex-1">
-            <Volume2 className="w-4 h-4 text-muted-foreground" />
-            <Slider
-              value={volume}
-              onValueChange={setVolume}
-              max={100}
-              step={1}
-              className="flex-1"
+            <div className="flex items-center gap-2 flex-1">
+              <Volume2 className="w-4 h-4 text-muted-foreground" />
+              <Slider
+                value={volume}
+                onValueChange={setVolume}
+                max={100}
+                step={1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-8">{volume[0]}%</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <label className="text-sm text-muted-foreground whitespace-nowrap">
+              Music BPM:
+            </label>
+            <input
+              type="number"
+              value={referenceBpm}
+              onChange={(e) => setReferenceBpm(Number(e.target.value))}
+              min={30}
+              max={300}
+              className="w-20 px-2 py-1 text-sm rounded-md border border-input bg-background"
             />
-            <span className="text-xs text-muted-foreground w-8">{volume[0]}%</span>
+            <span className="text-xs text-muted-foreground">
+              Speed: {((metronomeBpm / referenceBpm) * 100).toFixed(0)}%
+            </span>
           </div>
         </div>
 
