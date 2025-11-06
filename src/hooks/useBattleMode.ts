@@ -59,7 +59,22 @@ export const useBattleMode = ({
     toast.info(`DJ KeyKid plays: ${randomLick.name}`);
   }, [licks, onPlayLick]);
 
+  const endGame = useCallback(() => {
+    setGameState("game-over");
+    onStopMetronome();
+    clearTurnTimeout();
+    
+    const finalScore = playerScore + (recognizedPoints - scoreSnapshotRef.current);
+    setPlayerScore(finalScore);
+    
+    setNpcMessage("alright battle's over!");
+    toast.success(`Battle over! Final score: ${finalScore} points`);
+  }, [onStopMetronome, clearTurnTimeout, playerScore, recognizedPoints]);
+
   const startPlayerTurn = useCallback(() => {
+    // Move to next bar for player
+    const playerBar = currentBar + 1;
+    setCurrentBar(playerBar);
     setGameState("player-turn");
     setNpcMessage("your turn!");
     
@@ -69,7 +84,7 @@ export const useBattleMode = ({
     // Take snapshot of current score at start of turn
     scoreSnapshotRef.current = recognizedPoints;
     
-    // End turn after one bar
+    // End turn after one bar (4 beats)
     turnTimeoutRef.current = setTimeout(() => {
       // Calculate points earned this turn
       const pointsEarned = recognizedPoints - scoreSnapshotRef.current;
@@ -78,24 +93,23 @@ export const useBattleMode = ({
       if (pointsEarned > 0) {
         toast.success(`+${pointsEarned} points!`);
       }
-      
-      // Move to next bar
-      const nextBar = currentBar + 1;
-      setCurrentBar(nextBar);
 
-      if (nextBar >= TOTAL_BARS) {
+      if (playerBar >= TOTAL_BARS) {
         endGame();
       } else {
-        // NPC's turn
+        // Move to next bar for NPC
+        const npcBar = playerBar + 1;
+        setCurrentBar(npcBar);
         setGameState("npc-turn");
         playNPCTurn();
         
+        // After NPC plays for one bar, player's turn
         turnTimeoutRef.current = setTimeout(() => {
           startPlayerTurn();
         }, barDuration);
       }
     }, barDuration);
-  }, [currentBar, barDuration, onClearRecording, recognizedPoints, playNPCTurn]);
+  }, [currentBar, barDuration, onClearRecording, recognizedPoints, playNPCTurn, endGame, playerScore]);
 
   const startGame = useCallback(() => {
     if (licks.length === 0) {
@@ -117,29 +131,17 @@ export const useBattleMode = ({
 
     // Wait for count-in (one bar = 4 beats)
     turnTimeoutRef.current = setTimeout(() => {
-      // NPC goes first
+      // NPC goes first - Bar 1
       setGameState("npc-turn");
       setCurrentBar(1);
       playNPCTurn();
 
-      // After NPC's bar, player's turn
+      // After NPC's bar (4 beats), player's turn for Bar 2
       turnTimeoutRef.current = setTimeout(() => {
         startPlayerTurn();
       }, barDuration);
     }, barDuration);
   }, [licks.length, onStartMetronome, onClearRecording, playNPCTurn, startPlayerTurn, barDuration]);
-
-  const endGame = useCallback(() => {
-    setGameState("game-over");
-    onStopMetronome();
-    clearTurnTimeout();
-    
-    const finalScore = playerScore + (recognizedPoints - scoreSnapshotRef.current);
-    setPlayerScore(finalScore);
-    
-    setNpcMessage(finalScore > 50 ? "nice moves!" : "I bet you can't beat me!");
-    toast.success(`Battle over! Final score: ${finalScore} points`);
-  }, [onStopMetronome, clearTurnTimeout, playerScore, recognizedPoints]);
 
   const stopGame = useCallback(() => {
     setGameState("waiting");
