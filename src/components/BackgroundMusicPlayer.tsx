@@ -15,15 +15,14 @@ interface MusicFile {
 
 interface BackgroundMusicPlayerProps {
   refreshTrigger: number;
-  metronomeBpm: number;
 }
 
-export const BackgroundMusicPlayer = ({ refreshTrigger, metronomeBpm }: BackgroundMusicPlayerProps) => {
+export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerProps) => {
   const [musicFiles, setMusicFiles] = useState<MusicFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([70]);
-  const [referenceBpm, setReferenceBpm] = useState(120);
+  const [playbackRate, setPlaybackRate] = useState([100]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const loadMusicFiles = async () => {
@@ -65,13 +64,11 @@ export const BackgroundMusicPlayer = ({ refreshTrigger, metronomeBpm }: Backgrou
   }, [volume]);
 
   useEffect(() => {
-    if (audioRef.current && referenceBpm > 0) {
-      // Calculate playback rate as a ratio, clamped to browser-supported range (0.25 - 4.0)
-      const calculatedRate = metronomeBpm / referenceBpm;
-      const clampedRate = Math.max(0.25, Math.min(4.0, calculatedRate));
-      audioRef.current.playbackRate = clampedRate;
+    if (audioRef.current) {
+      // Convert percentage to rate (100% = 1.0)
+      audioRef.current.playbackRate = playbackRate[0] / 100;
     }
-  }, [metronomeBpm, referenceBpm]);
+  }, [playbackRate]);
 
   const handlePlay = () => {
     if (!selectedFile) {
@@ -173,21 +170,17 @@ export const BackgroundMusicPlayer = ({ refreshTrigger, metronomeBpm }: Backgrou
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <label className="text-sm text-muted-foreground whitespace-nowrap">
-              Music BPM:
-            </label>
-            <input
-              type="number"
-              value={referenceBpm}
-              onChange={(e) => setReferenceBpm(Number(e.target.value))}
-              min={30}
-              max={300}
-              className="w-20 px-2 py-1 text-sm rounded-md border border-input bg-background"
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">Speed:</span>
+            <Slider
+              value={playbackRate}
+              onValueChange={setPlaybackRate}
+              min={25}
+              max={400}
+              step={5}
+              className="flex-1"
             />
-            <span className="text-xs text-muted-foreground">
-              Speed: {((metronomeBpm / referenceBpm) * 100).toFixed(0)}%
-            </span>
+            <span className="text-xs text-muted-foreground w-12">{playbackRate[0]}%</span>
           </div>
         </div>
 

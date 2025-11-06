@@ -459,10 +459,7 @@ const Index = () => {
             <BackgroundMusicUpload 
               onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)}
             />
-            <BackgroundMusicPlayer 
-              refreshTrigger={musicRefreshTrigger} 
-              metronomeBpm={metronomeBpm}
-            />
+            <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
           </div>
         </div>
 
