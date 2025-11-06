@@ -9,7 +9,7 @@ export interface Lick {
   id: string;
   name: string;
   notes: LickNote[];
-  difficulty?: number; // 1-5 stars
-  bpm: number; // BPM it was recorded at
+  difficulty?: number; // 1-100 scale
+  bpm: number;
   createdAt: number;
 }

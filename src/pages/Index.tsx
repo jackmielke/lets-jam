@@ -222,6 +222,14 @@ const Index = () => {
     toast.success("Lick deleted!");
   }, [editingLickId]);
 
+  const handleUpdateDifficulty = useCallback((lickId: string, difficulty: number) => {
+    setLicks(prev => prev.map(lick => 
+      lick.id === lickId 
+        ? { ...lick, difficulty: difficulty || undefined }
+        : lick
+    ));
+  }, []);
+
   // Lick playback
   const { playLick } = useLickPlayback({
     onPlaySound: handlePlaySound,
@@ -438,6 +446,7 @@ const Index = () => {
           onDelete={handleDeleteLick}
           onDemonstrate={handleDemonstrateLick}
           onEdit={handleEditLick}
+          onUpdateDifficulty={handleUpdateDifficulty}
           editingLickId={editingLickId}
         />
 

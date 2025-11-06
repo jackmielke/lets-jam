@@ -2,16 +2,19 @@ import { Lick } from "@/types/lick";
 import { Card } from "@/components/ui/card";
 import { Music, Trash2, Play, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface LickLibraryProps {
   licks: Lick[];
   onDelete: (lickId: string) => void;
   onDemonstrate: (lick: Lick) => void;
   onEdit: (lick: Lick) => void;
+  onUpdateDifficulty: (lickId: string, difficulty: number) => void;
   editingLickId?: string | null;
 }
 
-export const LickLibrary = ({ licks, onDelete, onDemonstrate, onEdit, editingLickId }: LickLibraryProps) => {
+export const LickLibrary = ({ licks, onDelete, onDemonstrate, onEdit, onUpdateDifficulty, editingLickId }: LickLibraryProps) => {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -41,6 +44,33 @@ export const LickLibrary = ({ licks, onDelete, onDemonstrate, onEdit, editingLic
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   {lick.notes.map(n => n.noteName).join(" → ")}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Label htmlFor={`difficulty-${lick.id}`} className="text-xs text-muted-foreground whitespace-nowrap">
+                    Difficulty:
+                  </Label>
+                  <Input
+                    id={`difficulty-${lick.id}`}
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={lick.difficulty || ""}
+                    placeholder="1-100"
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val) && val >= 1 && val <= 100) {
+                        onUpdateDifficulty(lick.id, val);
+                      } else if (e.target.value === "") {
+                        onUpdateDifficulty(lick.id, 0);
+                      }
+                    }}
+                    className="w-20 h-7 text-sm"
+                  />
+                  {lick.difficulty && (
+                    <span className="text-xs font-medium text-primary">
+                      {lick.difficulty}/100
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex gap-1">
