@@ -73,7 +73,11 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
-  const [licks, setLicks] = useState<Lick[]>([]);
+  const [licks, setLicks] = useState<Lick[]>(() => {
+    // Load saved licks from localStorage on initial mount
+    const saved = localStorage.getItem('pianomaker-licks');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [lickName, setLickName] = useState("");
   const [editingLickId, setEditingLickId] = useState<string | null>(null);
   const [isPlayingSequence, setIsPlayingSequence] = useState(false);
@@ -86,6 +90,11 @@ const Index = () => {
     bpm: metronomeBpm,
     beatsPerBar: 4
   });
+
+  // Persist licks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('pianomaker-licks', JSON.stringify(licks));
+  }, [licks]);
 
   const handlePlaySound = useCallback((soundId: string) => {
     const sound = drumSounds.find((s) => s.id === soundId);
