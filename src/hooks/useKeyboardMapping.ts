@@ -5,7 +5,7 @@ interface KeyMapping {
 }
 
 // Map ASDF row to white keys (E4-A5)
-// Map QWERTY row to black keys (sharps/flats)
+// Map QWERTY row to black keys (sharps/flats) - positioned above corresponding white keys
 const keyMap: KeyMapping = {
   // White keys on home row: a s d f g h j k l ; '
   'a': 'e4',  // E4
@@ -20,12 +20,13 @@ const keyMap: KeyMapping = {
   ';': 'g5',  // G5
   "'": 'a5',  // A5
   
-  // Black keys on QWERTY row: r y u i o
-  'r': 'fs4', // F#4 (between s-d / F4-G4)
-  'y': 'gs4', // G#4 (between d-f / G4-A4)
-  'u': 'as4', // A#4 (between f-g / A4-B4)
-  'i': 'cs5', // C#5 (between h-j / C5-D5)
-  'o': 'ds5', // D#5 (between j-k / D5-E5)
+  // Black keys on QWERTY row: positioned above the white keys
+  'w': 'fs4', // F#4 (above S, between F4-G4)
+  'e': 'gs4', // G#4 (above D, between G4-A4)
+  't': 'as4', // A#4 (above F, between A4-B4)
+  'u': 'cs5', // C#5 (above H, between C5-D5)
+  'i': 'ds5', // D#5 (above J, between D5-E5)
+  'o': 'fs5', // F#5 (above K, between F5-G5)
 };
 
 interface UseKeyboardMappingProps {
