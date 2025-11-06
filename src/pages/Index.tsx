@@ -5,6 +5,7 @@ import { Sequencer } from "@/components/Sequencer";
 import { Metronome } from "@/components/Metronome";
 import { RecordingDisplay } from "@/components/RecordingDisplay";
 import { LickLibrary } from "@/components/LickLibrary";
+import { LickEditor } from "@/components/LickEditor";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
@@ -153,6 +154,18 @@ const Index = () => {
     toast.success(`Lick "${newLick.name}" saved!`);
   }, [recordedNotes, lickName, licks.length, metronomeBpm]);
 
+  const handleUpdateNote = useCallback((noteIndex: number, beatNumber: number, subdivision: number) => {
+    setRecordedNotes(prev => {
+      const newNotes = [...prev];
+      newNotes[noteIndex] = {
+        ...newNotes[noteIndex],
+        beatNumber,
+        subdivision
+      };
+      return newNotes;
+    });
+  }, []);
+
   const handleDeleteLick = useCallback((lickId: string) => {
     setLicks(prev => prev.filter(l => l.id !== lickId));
     toast.success("Lick deleted!");
@@ -285,6 +298,15 @@ const Index = () => {
             )}
           </div>
         </div>
+
+        {/* Lick Editor */}
+        {recordedNotes.length > 0 && (
+          <LickEditor 
+            notes={recordedNotes}
+            onUpdateNote={handleUpdateNote}
+            beatsPerBar={4}
+          />
+        )}
 
         {/* Lick Library */}
         <LickLibrary 
