@@ -5,6 +5,7 @@ export type InstrumentType = "roblox" | "synth" | "organ" | "guitar";
 
 export const useAudioEngine = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
+  const activeNotesRef = useRef<Set<string>>(new Set());
   const [instrumentType, setInstrumentType] = useState<InstrumentType>("roblox");
 
   const getAudioContext = useCallback(() => {
@@ -18,6 +19,18 @@ export const useAudioEngine = () => {
     const audioContext = getAudioContext();
     const currentTime = audioContext.currentTime;
     const noteFreq = frequency || 261.63;
+    const noteId = `${noteFreq}-${Date.now()}`;
+
+    // Add to active notes for polyphony tracking
+    activeNotesRef.current.add(noteId);
+    
+    // Calculate volume reduction based on active notes (prevent clipping)
+    const polyphonyFactor = Math.min(1, 3 / Math.max(1, activeNotesRef.current.size));
+    
+    // Cleanup function to remove note when it stops
+    const cleanup = () => {
+      activeNotesRef.current.delete(noteId);
+    };
 
     if (instrumentType === "synth") {
       // Analog synth sound with sawtooth wave and filter
@@ -38,14 +51,16 @@ export const useAudioEngine = () => {
       filter.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // ADSR envelope
+      // ADSR envelope with polyphony compensation
+      const volume = 0.4 * polyphonyFactor;
       gainNode.gain.setValueAtTime(0, currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.4, currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.2, currentTime + 0.1);
+      gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(volume * 0.5, currentTime + 0.1);
       gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.4);
 
       oscillator.start(currentTime);
       oscillator.stop(currentTime + 0.4);
+      oscillator.onended = cleanup;
 
     } else if (instrumentType === "organ") {
       // Church organ with multiple harmonics
@@ -73,6 +88,11 @@ export const useAudioEngine = () => {
 
         osc.start(currentTime);
         osc.stop(currentTime + 0.8);
+        
+        // Cleanup on last harmonic
+        if (index === harmonics.length - 1) {
+          osc.onended = cleanup;
+        }
       });
 
     } else if (instrumentType === "guitar") {
@@ -109,14 +129,16 @@ export const useAudioEngine = () => {
       filter.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // Aggressive attack and sustain
+      // Aggressive attack and sustain with polyphony compensation
+      const volume = 0.3 * polyphonyFactor;
       gainNode.gain.setValueAtTime(0, currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.005);
-      gainNode.gain.exponentialRampToValueAtTime(0.15, currentTime + 0.1);
+      gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.005);
+      gainNode.gain.exponentialRampToValueAtTime(volume * 0.5, currentTime + 0.1);
       gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.5);
 
       oscillator.start(currentTime);
       oscillator.stop(currentTime + 0.5);
+      oscillator.onended = cleanup;
 
     } else {
       // Roblox-style synthetic sound with triangle wave (default)
@@ -133,14 +155,16 @@ export const useAudioEngine = () => {
       oscillator.frequency.linearRampToValueAtTime(noteFreq * 1.02, currentTime + 0.05);
       oscillator.frequency.linearRampToValueAtTime(noteFreq, currentTime + 0.1);
       
-      // Roblox-style envelope - bouncy and synthetic
+      // Roblox-style envelope - bouncy and synthetic with polyphony compensation
+      const volume = 0.5 * polyphonyFactor;
       gainNode.gain.setValueAtTime(0, currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.5, currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.3, currentTime + 0.08);
+      gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(volume * 0.6, currentTime + 0.08);
       gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.25);
 
       oscillator.start(currentTime);
       oscillator.stop(currentTime + 0.25);
+      oscillator.onended = cleanup;
     }
   }, [getAudioContext, instrumentType]);
 
