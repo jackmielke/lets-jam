@@ -1,14 +1,15 @@
 import { Lick } from "@/types/lick";
 import { Card } from "@/components/ui/card";
-import { Music, Trash2 } from "lucide-react";
+import { Music, Trash2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LickLibraryProps {
   licks: Lick[];
   onDelete: (lickId: string) => void;
+  onDemonstrate: (lick: Lick) => void;
 }
 
-export const LickLibrary = ({ licks, onDelete }: LickLibraryProps) => {
+export const LickLibrary = ({ licks, onDelete, onDemonstrate }: LickLibraryProps) => {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -36,14 +37,24 @@ export const LickLibrary = ({ licks, onDelete }: LickLibraryProps) => {
                   {lick.notes.map(n => n.noteName).join(" → ")}
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(lick.id)}
-                className="hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDemonstrate(lick)}
+                  className="hover:text-primary"
+                >
+                  <Play className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(lick.id)}
+                  className="hover:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

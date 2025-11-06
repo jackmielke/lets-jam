@@ -8,6 +8,7 @@ import { LickLibrary } from "@/components/LickLibrary";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
+import { useLickPlayback } from "@/hooks/useLickPlayback";
 import { DrumSound } from "@/types/audio";
 import { RecordedNote } from "@/types/recording";
 import { Lick } from "@/types/lick";
@@ -157,6 +158,24 @@ const Index = () => {
     toast.success("Lick deleted!");
   }, []);
 
+  // Lick playback
+  const { playLick } = useLickPlayback({
+    onPlaySound: handlePlaySound,
+    onHighlight: setPressedKeyId,
+    drumSounds,
+    bpm: metronomeBpm
+  });
+
+  const handleDemonstrateLick = useCallback((lick: Lick) => {
+    if (!metronome.isPlaying) {
+      toast.error("Start the metronome first!");
+      return;
+    }
+    
+    toast.success(`Demonstrating: ${lick.name}`);
+    playLick(lick);
+  }, [playLick, metronome.isPlaying]);
+
   const handleToggleStep = useCallback((soundIndex: number, stepIndex: number) => {
     setSteps((prev) => {
       const newSteps = [...prev];
@@ -259,7 +278,11 @@ const Index = () => {
         </div>
 
         {/* Lick Library */}
-        <LickLibrary licks={licks} onDelete={handleDeleteLick} />
+        <LickLibrary 
+          licks={licks} 
+          onDelete={handleDeleteLick}
+          onDemonstrate={handleDemonstrateLick}
+        />
 
         <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
 
