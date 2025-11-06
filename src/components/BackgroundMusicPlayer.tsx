@@ -66,7 +66,10 @@ export const BackgroundMusicPlayer = ({ refreshTrigger, metronomeBpm }: Backgrou
 
   useEffect(() => {
     if (audioRef.current && referenceBpm > 0) {
-      audioRef.current.playbackRate = metronomeBpm / referenceBpm;
+      // Calculate playback rate as a ratio, clamped to browser-supported range (0.25 - 4.0)
+      const calculatedRate = metronomeBpm / referenceBpm;
+      const clampedRate = Math.max(0.25, Math.min(4.0, calculatedRate));
+      audioRef.current.playbackRate = clampedRate;
     }
   }, [metronomeBpm, referenceBpm]);
 
