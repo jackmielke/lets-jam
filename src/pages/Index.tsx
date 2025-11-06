@@ -10,6 +10,8 @@ import { LickSequencer } from "@/components/LickSequencer";
 import { ScoreDisplay } from "@/components/ScoreDisplay";
 import { BackgroundMusicUpload } from "@/components/BackgroundMusicUpload";
 import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
+import { SampleRecorder } from "@/components/SampleRecorder";
+import { SampleLibrary } from "@/components/SampleLibrary";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
@@ -89,6 +91,7 @@ const Index = () => {
     drumSounds.map(() => Array(16).fill(false))
   );
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
+  const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
 
   // Metronome for rhythm tracking
   const metronome = useMetronome({
@@ -460,6 +463,17 @@ const Index = () => {
               onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)}
             />
             <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
+          </div>
+        </div>
+
+        {/* Audio Samples */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-center">Audio Samples</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <SampleRecorder 
+              onSampleSaved={() => setSampleRefreshTrigger(prev => prev + 1)}
+            />
+            <SampleLibrary refreshTrigger={sampleRefreshTrigger} />
           </div>
         </div>
 
