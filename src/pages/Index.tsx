@@ -272,7 +272,18 @@ const Index = () => {
     
     toast.success(`Playing sequence (${sequence.length} licks)`);
 
-    // Play licks one after another
+    // Calculate the duration of each lick in beats and round up to next full measure
+    const getLickMeasureDuration = (lick: Lick) => {
+      let maxBeat = 0;
+      lick.notes.forEach(note => {
+        const totalBeat = note.beatNumber + note.subdivision;
+        maxBeat = Math.max(maxBeat, totalBeat);
+      });
+      // Round up to next multiple of 4 (full measure)
+      return Math.ceil(maxBeat / 4) * 4;
+    };
+
+    // Play licks one after another, aligned to measure boundaries
     const playNextLick = (index: number, delay: number) => {
       if (index >= sequence.length) {
         setTimeout(() => {
@@ -284,9 +295,14 @@ const Index = () => {
 
       setTimeout(() => {
         const lick = sequence[index];
-        const lickDuration = playLick(lick);
-        // Add a small gap between licks (one beat)
-        playNextLick(index + 1, lickDuration + beatDuration);
+        playLick(lick);
+        
+        // Calculate how many beats this lick spans (rounded to full measures)
+        const lickBeats = getLickMeasureDuration(lick);
+        const lickDuration = lickBeats * beatDuration;
+        
+        // Schedule next lick to start exactly on the next measure
+        playNextLick(index + 1, lickDuration);
       }, delay);
     };
 
