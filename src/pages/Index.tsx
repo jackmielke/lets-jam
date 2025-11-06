@@ -12,6 +12,7 @@ import { BackgroundMusicUpload } from "@/components/BackgroundMusicUpload";
 import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
 import { SampleRecorder } from "@/components/SampleRecorder";
 import { SampleLibrary } from "@/components/SampleLibrary";
+import { BattleMode } from "@/components/BattleMode";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
@@ -475,6 +476,20 @@ const Index = () => {
             />
             <SampleLibrary refreshTrigger={sampleRefreshTrigger} />
           </div>
+        </div>
+
+        {/* Battle Mode */}
+        <div className="space-y-4">
+          <BattleMode
+            licks={licks}
+            onPlayLick={playLick}
+            onStartMetronome={metronome.start}
+            onStopMetronome={metronome.stop}
+            bpm={metronomeBpm}
+            recordedNotes={recordedNotes}
+            onClearRecording={handleClearRecording}
+            recognizedPoints={totalScore}
+          />
         </div>
 
         {/* Lick Editor */}
