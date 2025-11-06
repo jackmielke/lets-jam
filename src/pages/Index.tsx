@@ -135,7 +135,7 @@ const Index = () => {
             Piano Maker
           </h1>
           <p className="text-muted-foreground text-lg">
-            Play using your keyboard: <span className="font-mono font-bold">ASDFGHJKL;'</span> for white keys, <span className="font-mono font-bold">WERTYUIO</span> for black keys
+            Play using your keyboard: <span className="font-mono font-bold">ASDFGHJKL;'</span> for white keys, <span className="font-mono font-bold">RYUIO</span> for black keys (C5 on H)
           </p>
         </header>
 

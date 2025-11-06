@@ -4,30 +4,28 @@ interface KeyMapping {
   [key: string]: string; // keyboard key -> sound id
 }
 
-// Map ASDF row to white keys (C4-E5)
+// Map ASDF row to white keys (E4-A5)
 // Map QWERTY row to black keys (sharps/flats)
 const keyMap: KeyMapping = {
   // White keys on home row: a s d f g h j k l ; '
-  'a': 'c4',  // C4
-  's': 'd4',  // D4
-  'd': 'e4',  // E4
-  'f': 'f4',  // F4
-  'g': 'g4',  // G4
-  'h': 'a4',  // A4
-  'j': 'b4',  // B4
-  'k': 'c5',  // C5
-  'l': 'd5',  // D5
-  ';': 'e5',  // E5
-  "'": 'f5',  // F5
+  'a': 'e4',  // E4
+  's': 'f4',  // F4
+  'd': 'g4',  // G4
+  'f': 'a4',  // A4
+  'g': 'b4',  // B4
+  'h': 'c5',  // C5 (centered on H)
+  'j': 'd5',  // D5
+  'k': 'e5',  // E5
+  'l': 'f5',  // F5
+  ';': 'g5',  // G5
+  "'": 'a5',  // A5
   
-  // Black keys on QWERTY row: w e r t y u i o
-  'w': 'cs4', // C#4
-  'e': 'ds4', // D#4
-  't': 'fs4', // F#4
-  'y': 'gs4', // G#4
-  'u': 'as4', // A#4
-  'i': 'cs5', // C#5
-  'o': 'ds5', // D#5
+  // Black keys on QWERTY row: r y u i o
+  'r': 'fs4', // F#4 (between s-d / F4-G4)
+  'y': 'gs4', // G#4 (between d-f / G4-A4)
+  'u': 'as4', // A#4 (between f-g / A4-B4)
+  'i': 'cs5', // C#5 (between h-j / C5-D5)
+  'o': 'ds5', // D#5 (between j-k / D5-E5)
 };
 
 interface UseKeyboardMappingProps {
