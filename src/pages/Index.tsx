@@ -6,6 +6,7 @@ import { Metronome } from "@/components/Metronome";
 import { RecordingDisplay } from "@/components/RecordingDisplay";
 import { LickLibrary } from "@/components/LickLibrary";
 import { LickEditor } from "@/components/LickEditor";
+import { LickSequencer } from "@/components/LickSequencer";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
@@ -75,6 +76,7 @@ const Index = () => {
   const [licks, setLicks] = useState<Lick[]>([]);
   const [lickName, setLickName] = useState("");
   const [editingLickId, setEditingLickId] = useState<string | null>(null);
+  const [isPlayingSequence, setIsPlayingSequence] = useState(false);
   const [steps, setSteps] = useState<boolean[][]>(
     drumSounds.map(() => Array(16).fill(false))
   );
@@ -246,6 +248,42 @@ const Index = () => {
     }
   }, [playLick, metronome, metronomeBpm]);
 
+  const handlePlaySequence = useCallback((sequence: Lick[]) => {
+    if (sequence.length === 0) return;
+    
+    setIsPlayingSequence(true);
+    
+    // Start metronome if not playing
+    if (!metronome.isPlaying) {
+      metronome.start();
+    }
+
+    const beatDuration = (60 / metronomeBpm) * 1000;
+    const oneBarDelay = beatDuration * 4;
+    
+    toast.success(`Playing sequence (${sequence.length} licks)`);
+
+    // Play licks one after another
+    const playNextLick = (index: number, delay: number) => {
+      if (index >= sequence.length) {
+        setTimeout(() => {
+          metronome.stop();
+          setIsPlayingSequence(false);
+        }, delay);
+        return;
+      }
+
+      setTimeout(() => {
+        const lick = sequence[index];
+        const lickDuration = playLick(lick);
+        // Add a small gap between licks (one beat)
+        playNextLick(index + 1, lickDuration + beatDuration);
+      }, delay);
+    };
+
+    playNextLick(0, oneBarDelay);
+  }, [playLick, metronome, metronomeBpm]);
+
   const handleToggleStep = useCallback((soundIndex: number, stepIndex: number) => {
     setSteps((prev) => {
       const newSteps = [...prev];
@@ -375,6 +413,13 @@ const Index = () => {
           onDemonstrate={handleDemonstrateLick}
           onEdit={handleEditLick}
           editingLickId={editingLickId}
+        />
+
+        {/* Lick Sequencer */}
+        <LickSequencer
+          availableLicks={licks}
+          onPlaySequence={handlePlaySequence}
+          isPlaying={isPlayingSequence}
         />
 
         <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
