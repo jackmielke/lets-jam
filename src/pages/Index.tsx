@@ -8,6 +8,8 @@ import { LickLibrary } from "@/components/LickLibrary";
 import { LickEditor } from "@/components/LickEditor";
 import { LickSequencer } from "@/components/LickSequencer";
 import { ScoreDisplay } from "@/components/ScoreDisplay";
+import { BackgroundMusicUpload } from "@/components/BackgroundMusicUpload";
+import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
@@ -86,6 +88,7 @@ const Index = () => {
   const [steps, setSteps] = useState<boolean[][]>(
     drumSounds.map(() => Array(16).fill(false))
   );
+  const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
 
   // Metronome for rhythm tracking
   const metronome = useMetronome({
@@ -447,6 +450,17 @@ const Index = () => {
             recentRecognition={recentRecognition}
             onReset={resetScore}
           />
+        </div>
+
+        {/* Background Music */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-center">Background Music</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <BackgroundMusicUpload 
+              onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)}
+            />
+            <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
+          </div>
         </div>
 
         {/* Lick Editor */}
