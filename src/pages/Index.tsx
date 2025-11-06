@@ -17,7 +17,7 @@ import { quantizeRecording } from "@/utils/quantize";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save } from "lucide-react";
+import { Save, Trash } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 
 const drumSounds: DrumSound[] = [
@@ -285,11 +285,20 @@ const Index = () => {
                   value={lickName}
                   onChange={(e) => setLickName(e.target.value)}
                   disabled={licks.length >= 5}
+                  className="flex-1"
                 />
+                <Button
+                  onClick={handleClearRecording}
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                >
+                  <Trash className="w-4 h-4" />
+                </Button>
                 <Button
                   onClick={handleSaveLick}
                   disabled={licks.length >= 5 || !lickName.trim()}
-                  className="gap-2"
+                  className="gap-2 shrink-0"
                 >
                   <Save className="w-4 h-4" />
                   Save Lick
