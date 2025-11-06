@@ -230,11 +230,19 @@ const Index = () => {
       toast.success(`Demonstrating: ${lick.name} (starting in 4 beats)`);
       
       setTimeout(() => {
-        playLick(lick);
+        const lickDuration = playLick(lick);
+        // Stop metronome after lick finishes
+        setTimeout(() => {
+          metronome.stop();
+        }, lickDuration);
       }, oneBarDelay);
     } else {
       toast.success(`Demonstrating: ${lick.name}`);
-      playLick(lick);
+      const lickDuration = playLick(lick);
+      // Stop metronome after lick finishes
+      setTimeout(() => {
+        metronome.stop();
+      }, lickDuration);
     }
   }, [playLick, metronome, metronomeBpm]);
 
