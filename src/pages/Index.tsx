@@ -3,6 +3,7 @@ import { DrumGrid } from "@/components/DrumGrid";
 import { Controls } from "@/components/Controls";
 import { Sequencer } from "@/components/Sequencer";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
+import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { DrumSound } from "@/types/audio";
 import { toast } from "sonner";
 import teamPhoto from "@/assets/team-photo.jpeg";
@@ -67,6 +68,12 @@ const Index = () => {
     }
   }, [playSound]);
 
+  // Enable keyboard mapping
+  useKeyboardMapping({ 
+    onKeyPress: handlePlaySound,
+    enabled: true 
+  });
+
   const handleToggleStep = useCallback((soundIndex: number, stepIndex: number) => {
     setSteps((prev) => {
       const newSteps = [...prev];
@@ -128,7 +135,7 @@ const Index = () => {
             Piano Maker
           </h1>
           <p className="text-muted-foreground text-lg">
-            Crea melodías increíbles tocando las teclas o usando el secuenciador
+            Play using your keyboard: <span className="font-mono font-bold">ASDFGHJKL;'</span> for white keys, <span className="font-mono font-bold">WERTYUIO</span> for black keys
           </p>
         </header>
 

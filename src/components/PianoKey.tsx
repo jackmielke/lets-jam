@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DrumSound } from "@/types/audio";
+import { getKeyForSound } from "@/hooks/useKeyboardMapping";
 
 interface PianoKeyProps {
   sound: DrumSound;
@@ -9,6 +10,7 @@ interface PianoKeyProps {
 
 export const PianoKey = ({ sound, onPlay, isBlack }: PianoKeyProps) => {
   const [isPressed, setIsPressed] = useState(false);
+  const keyboardKey = getKeyForSound(sound.id);
 
   const handlePress = () => {
     setIsPressed(true);
@@ -33,6 +35,11 @@ export const PianoKey = ({ sound, onPlay, isBlack }: PianoKeyProps) => {
       <span className={`text-[10px] sm:text-xs font-semibold ${isBlack ? "text-white" : "text-gray-700"}`}>
         {sound.name}
       </span>
+      {keyboardKey && (
+        <span className={`text-[8px] sm:text-[10px] font-mono font-bold ${isBlack ? "text-white/60" : "text-gray-500"}`}>
+          [{keyboardKey}]
+        </span>
+      )}
       {isPressed && (
         <div className={`absolute bottom-0 left-0 right-0 h-1 ${isBlack ? "bg-primary" : "bg-secondary"} animate-pulse rounded-b-md`} />
       )}
