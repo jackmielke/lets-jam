@@ -74,6 +74,7 @@ const Index = () => {
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
   const [licks, setLicks] = useState<Lick[]>([]);
   const [lickName, setLickName] = useState("");
+  const [editingLickId, setEditingLickId] = useState<string | null>(null);
   const [steps, setSteps] = useState<boolean[][]>(
     drumSounds.map(() => Array(16).fill(false))
   );
@@ -120,6 +121,8 @@ const Index = () => {
 
   const handleClearRecording = useCallback(() => {
     setRecordedNotes([]);
+    setEditingLickId(null);
+    setLickName("");
     toast.success("Recording cleared!");
   }, []);
 
@@ -134,25 +137,39 @@ const Index = () => {
       return;
     }
 
-    if (licks.length >= 5) {
-      toast.error("Maximum 5 licks reached!");
-      return;
+    const quantizedNotes = quantizeRecording(recordedNotes);
+
+    if (editingLickId) {
+      // Update existing lick
+      setLicks(prev => prev.map(lick => 
+        lick.id === editingLickId 
+          ? { ...lick, name: lickName.trim(), notes: quantizedNotes, bpm: metronomeBpm }
+          : lick
+      ));
+      toast.success(`Lick "${lickName}" updated!`);
+    } else {
+      // Create new lick
+      if (licks.length >= 5) {
+        toast.error("Maximum 5 licks reached!");
+        return;
+      }
+
+      const newLick: Lick = {
+        id: Date.now().toString(),
+        name: lickName.trim(),
+        notes: quantizedNotes,
+        bpm: metronomeBpm,
+        createdAt: Date.now()
+      };
+
+      setLicks(prev => [...prev, newLick]);
+      toast.success(`Lick "${newLick.name}" saved!`);
     }
 
-    const quantizedNotes = quantizeRecording(recordedNotes);
-    const newLick: Lick = {
-      id: Date.now().toString(),
-      name: lickName.trim(),
-      notes: quantizedNotes,
-      bpm: metronomeBpm,
-      createdAt: Date.now()
-    };
-
-    setLicks(prev => [...prev, newLick]);
     setRecordedNotes([]);
     setLickName("");
-    toast.success(`Lick "${newLick.name}" saved!`);
-  }, [recordedNotes, lickName, licks.length, metronomeBpm]);
+    setEditingLickId(null);
+  }, [recordedNotes, lickName, licks.length, metronomeBpm, editingLickId]);
 
   const handleUpdateNote = useCallback((noteIndex: number, beatNumber: number, subdivision: number) => {
     setRecordedNotes(prev => {
@@ -166,10 +183,33 @@ const Index = () => {
     });
   }, []);
 
+  const handleEditLick = useCallback((lick: Lick) => {
+    // Convert LickNote[] to RecordedNote[] for the editor
+    const notes: RecordedNote[] = lick.notes.map(note => ({
+      soundId: note.soundId,
+      noteName: note.noteName,
+      timestamp: 0, // Not needed for editing
+      beatNumber: note.beatNumber,
+      subdivision: note.subdivision,
+      offsetMs: 0,
+      accuracy: 'perfect' as const
+    }));
+
+    setRecordedNotes(notes);
+    setLickName(lick.name);
+    setEditingLickId(lick.id);
+    toast.info(`Editing: ${lick.name}`);
+  }, []);
+
   const handleDeleteLick = useCallback((lickId: string) => {
     setLicks(prev => prev.filter(l => l.id !== lickId));
+    if (editingLickId === lickId) {
+      setEditingLickId(null);
+      setRecordedNotes([]);
+      setLickName("");
+    }
     toast.success("Lick deleted!");
-  }, []);
+  }, [editingLickId]);
 
   // Lick playback
   const { playLick } = useLickPlayback({
@@ -297,11 +337,11 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={handleSaveLick}
-                  disabled={licks.length >= 5 || !lickName.trim()}
+                  disabled={!editingLickId && licks.length >= 5 || !lickName.trim()}
                   className="gap-2 shrink-0"
                 >
                   <Save className="w-4 h-4" />
-                  Save Lick
+                  {editingLickId ? "Update Lick" : "Save Lick"}
                 </Button>
               </div>
             )}
@@ -322,6 +362,8 @@ const Index = () => {
           licks={licks} 
           onDelete={handleDeleteLick}
           onDemonstrate={handleDemonstrateLick}
+          onEdit={handleEditLick}
+          editingLickId={editingLickId}
         />
 
         <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />

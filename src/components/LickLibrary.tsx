@@ -1,15 +1,17 @@
 import { Lick } from "@/types/lick";
 import { Card } from "@/components/ui/card";
-import { Music, Trash2, Play } from "lucide-react";
+import { Music, Trash2, Play, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LickLibraryProps {
   licks: Lick[];
   onDelete: (lickId: string) => void;
   onDemonstrate: (lick: Lick) => void;
+  onEdit: (lick: Lick) => void;
+  editingLickId?: string | null;
 }
 
-export const LickLibrary = ({ licks, onDelete, onDemonstrate }: LickLibraryProps) => {
+export const LickLibrary = ({ licks, onDelete, onDemonstrate, onEdit, editingLickId }: LickLibraryProps) => {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -23,11 +25,15 @@ export const LickLibrary = ({ licks, onDelete, onDemonstrate }: LickLibraryProps
         </p>
       ) : (
         <div className="space-y-3">
-          {licks.map((lick) => (
-            <div
-              key={lick.id}
-              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-            >
+          {licks.map((lick) => {
+            const isEditing = editingLickId === lick.id;
+            return (
+              <div
+                key={lick.id}
+                className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                  isEditing ? "bg-primary/10 border-2 border-primary" : "bg-muted/50"
+                }`}
+              >
               <div className="flex-1">
                 <div className="font-semibold">{lick.name}</div>
                 <div className="text-sm text-muted-foreground">
@@ -49,6 +55,14 @@ export const LickLibrary = ({ licks, onDelete, onDemonstrate }: LickLibraryProps
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => onEdit(lick)}
+                  className={isEditing ? "text-primary" : "hover:text-primary"}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDelete(lick.id)}
                   className="hover:text-destructive"
                 >
@@ -56,7 +70,8 @@ export const LickLibrary = ({ licks, onDelete, onDemonstrate }: LickLibraryProps
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </Card>
