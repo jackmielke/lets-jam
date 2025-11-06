@@ -1,17 +1,21 @@
 import { RecordedNote } from "@/types/recording";
 import { Card } from "@/components/ui/card";
-import { Edit3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Edit3, Save } from "lucide-react";
 import { useState } from "react";
 
 interface LickEditorProps {
   notes: RecordedNote[];
   onUpdateNote: (index: number, beatNumber: number, subdivision: number) => void;
   beatsPerBar?: number;
+  isEditing?: boolean;
+  onSave?: () => void;
+  canSave?: boolean;
 }
 
 const subdivisions = [0, 0.25, 0.5, 0.75];
 
-export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4 }: LickEditorProps) => {
+export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = false, onSave, canSave = true }: LickEditorProps) => {
   const [draggedNoteIndex, setDraggedNoteIndex] = useState<number | null>(null);
 
   if (notes.length === 0) return null;
@@ -123,6 +127,20 @@ export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4 }: LickEditorP
           </div>
         </div>
       </div>
+
+      {/* Update button for editing mode */}
+      {isEditing && onSave && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            onClick={onSave}
+            disabled={!canSave}
+            className="gap-2"
+          >
+            <Save className="w-4 h-4" />
+            Update Lick
+          </Button>
+        </div>
+      )}
     </Card>
   );
 };

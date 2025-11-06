@@ -318,7 +318,7 @@ const Index = () => {
               notes={recordedNotes}
               isRecording={metronome.isPlaying}
             />
-            {recordedNotes.length > 0 && (
+            {recordedNotes.length > 0 && !editingLickId && (
               <div className="flex gap-2">
                 <Input
                   placeholder="Lick name..."
@@ -337,11 +337,11 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={handleSaveLick}
-                  disabled={!editingLickId && licks.length >= 5 || !lickName.trim()}
+                  disabled={licks.length >= 5 || !lickName.trim()}
                   className="gap-2 shrink-0"
                 >
                   <Save className="w-4 h-4" />
-                  {editingLickId ? "Update Lick" : "Save Lick"}
+                  Save Lick
                 </Button>
               </div>
             )}
@@ -354,6 +354,9 @@ const Index = () => {
             notes={recordedNotes}
             onUpdateNote={handleUpdateNote}
             beatsPerBar={4}
+            isEditing={!!editingLickId}
+            onSave={editingLickId ? handleSaveLick : undefined}
+            canSave={!!lickName.trim()}
           />
         )}
 
