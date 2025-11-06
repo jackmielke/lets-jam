@@ -4,12 +4,18 @@ import { Controls } from "@/components/Controls";
 import { Sequencer } from "@/components/Sequencer";
 import { Metronome } from "@/components/Metronome";
 import { RecordingDisplay } from "@/components/RecordingDisplay";
+import { LickLibrary } from "@/components/LickLibrary";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
 import { DrumSound } from "@/types/audio";
 import { RecordedNote } from "@/types/recording";
+import { Lick } from "@/types/lick";
+import { quantizeRecording } from "@/utils/quantize";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Save } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 
 const drumSounds: DrumSound[] = [
@@ -64,6 +70,8 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
+  const [licks, setLicks] = useState<Lick[]>([]);
+  const [lickName, setLickName] = useState("");
   const [steps, setSteps] = useState<boolean[][]>(
     drumSounds.map(() => Array(16).fill(false))
   );
@@ -111,6 +119,42 @@ const Index = () => {
   const handleClearRecording = useCallback(() => {
     setRecordedNotes([]);
     toast.success("Recording cleared!");
+  }, []);
+
+  const handleSaveLick = useCallback(() => {
+    if (recordedNotes.length === 0) {
+      toast.error("No notes recorded!");
+      return;
+    }
+
+    if (!lickName.trim()) {
+      toast.error("Please enter a lick name!");
+      return;
+    }
+
+    if (licks.length >= 5) {
+      toast.error("Maximum 5 licks reached!");
+      return;
+    }
+
+    const quantizedNotes = quantizeRecording(recordedNotes);
+    const newLick: Lick = {
+      id: Date.now().toString(),
+      name: lickName.trim(),
+      notes: quantizedNotes,
+      bpm: metronomeBpm,
+      createdAt: Date.now()
+    };
+
+    setLicks(prev => [...prev, newLick]);
+    setRecordedNotes([]);
+    setLickName("");
+    toast.success(`Lick "${newLick.name}" saved!`);
+  }, [recordedNotes, lickName, licks.length, metronomeBpm]);
+
+  const handleDeleteLick = useCallback((lickId: string) => {
+    setLicks(prev => prev.filter(l => l.id !== lickId));
+    toast.success("Lick deleted!");
   }, []);
 
   const handleToggleStep = useCallback((soundIndex: number, stepIndex: number) => {
@@ -188,11 +232,34 @@ const Index = () => {
             onToggle={metronome.toggle}
             onBpmChange={setMetronomeBpm}
           />
-          <RecordingDisplay 
-            notes={recordedNotes}
-            isRecording={metronome.isPlaying}
-          />
+          <div className="space-y-4">
+            <RecordingDisplay 
+              notes={recordedNotes}
+              isRecording={metronome.isPlaying}
+            />
+            {recordedNotes.length > 0 && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Lick name..."
+                  value={lickName}
+                  onChange={(e) => setLickName(e.target.value)}
+                  disabled={licks.length >= 5}
+                />
+                <Button
+                  onClick={handleSaveLick}
+                  disabled={licks.length >= 5 || !lickName.trim()}
+                  className="gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Lick
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Lick Library */}
+        <LickLibrary licks={licks} onDelete={handleDeleteLick} />
 
         <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
 
