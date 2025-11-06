@@ -274,13 +274,14 @@ const Index = () => {
 
     // Calculate the duration of each lick in beats and round up to next full measure
     const getLickMeasureDuration = (lick: Lick) => {
-      let maxBeat = 0;
+      let maxBeatsFromStart = 0;
       lick.notes.forEach(note => {
-        const totalBeat = note.beatNumber + note.subdivision;
-        maxBeat = Math.max(maxBeat, totalBeat);
+        // Convert beat number (1-indexed) to beats from start (0-indexed)
+        const beatsFromStart = (note.beatNumber - 1) + note.subdivision;
+        maxBeatsFromStart = Math.max(maxBeatsFromStart, beatsFromStart);
       });
       // Round up to next multiple of 4 (full measure)
-      return Math.ceil(maxBeat / 4) * 4;
+      return Math.ceil((maxBeatsFromStart + 0.01) / 4) * 4;
     };
 
     // Play licks one after another, aligned to measure boundaries
