@@ -123,21 +123,24 @@ export const useBattleMode = ({
       setTurnPointsEarned(0); // Reset turn points display
       console.log(`🎮 Player turn ${barNumber}: Score snapshot = ${scoreSnapshotRef.current}`);
 
-      // End player bar after one bar, add points, then advance
+      // End player bar after one bar, add grace period, then calculate points
       clearTurnTimeout();
       turnTimeoutRef.current = setTimeout(() => {
-        const pointsEarned = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
-        setPlayerScore(prev => prev + pointsEarned);
-        console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
-        console.log(`   📊 Notes played: ${recordedNotes.length}, Licks available: ${licks.length}`);
-        if (pointsEarned > 0) {
-          toast.success(`+${pointsEarned} points!`);
-        } else {
-          toast.info("No licks recognized this turn");
-          console.warn(`⚠️ No points earned this turn`);
-        }
-        barIndexRef.current += 1;
-        runBar();
+        // Add 150ms grace period for lick recognition to process final notes
+        turnTimeoutRef.current = setTimeout(() => {
+          const pointsEarned = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
+          setPlayerScore(prev => prev + pointsEarned);
+          console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
+          console.log(`   📊 Notes played: ${recordedNotes.length}, Licks available: ${licks.length}`);
+          if (pointsEarned > 0) {
+            toast.success(`+${pointsEarned} points!`);
+          } else {
+            toast.info("No licks recognized this turn");
+            console.warn(`⚠️ No points earned this turn`);
+          }
+          barIndexRef.current += 1;
+          runBar();
+        }, 150); // Grace period for note processing
       }, barDuration);
     }
   }, [TOTAL_BARS, barDuration, endGame, onClearRecording, onResetRecognizedLicks, playNPCTurn]);
