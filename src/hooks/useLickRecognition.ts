@@ -149,11 +149,11 @@ export const useLickRecognition = ({
 
   // Check for lick matches when new notes are recorded
   useEffect(() => {
-    if (!isRecording || recordedNotes.length === 0) {
-      // Don't reset during active sessions - only when truly stopping
-      if (recordedNotes.length === 0 && !isRecording) {
-        recognizedLickIdsRef.current.clear();
-        lastCheckIndexRef.current = 0;
+    // Reset recognition state when recording stops and there are no notes
+    if (recordedNotes.length === 0) {
+      recognizedLickIdsRef.current.clear();
+      lastCheckIndexRef.current = 0;
+      if (!isRecording) {
         console.log("🔄 Lick recognition reset (not recording)");
       }
       return;
