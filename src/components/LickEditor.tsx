@@ -1,7 +1,7 @@
 import { RecordedNote } from "@/types/recording";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Save } from "lucide-react";
+import { Edit3, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
 interface LickEditorProps {
@@ -17,6 +17,7 @@ const subdivisions = [0, 0.25, 0.5, 0.75];
 
 export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = false, onSave, canSave = true }: LickEditorProps) => {
   const [draggedNoteIndex, setDraggedNoteIndex] = useState<number | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   if (notes.length === 0) return null;
 
@@ -41,15 +42,37 @@ export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = f
 
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Edit3 className="w-5 h-5 text-primary" />
-        <h3 className="text-xl font-semibold">Lick Editor</h3>
-        <span className="text-sm text-muted-foreground">
-          Drag notes to adjust timing
-        </span>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Edit3 className="w-5 h-5 text-primary" />
+          <h3 className="text-xl font-semibold">Lick Editor</h3>
+          <span className="text-sm text-muted-foreground">
+            {isCollapsed ? `${notes.length} notes` : "Drag notes to adjust timing"}
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="gap-2"
+        >
+          {isCollapsed ? (
+            <>
+              <span className="text-sm">Expand</span>
+              <ChevronDown className="w-4 h-4" />
+            </>
+          ) : (
+            <>
+              <span className="text-sm">Collapse</span>
+              <ChevronUp className="w-4 h-4" />
+            </>
+          )}
+        </Button>
       </div>
 
-      <div className="overflow-x-auto">
+      {!isCollapsed && (
+        <>
+          <div className="overflow-x-auto">
         <div className="min-w-[600px]">
           {/* Header with beat numbers */}
           <div className="flex border-b border-border mb-2 pb-2">
@@ -128,18 +151,20 @@ export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = f
         </div>
       </div>
 
-      {/* Update button for editing mode */}
-      {isEditing && onSave && (
-        <div className="mt-4 flex justify-end">
-          <Button
-            onClick={onSave}
-            disabled={!canSave}
-            className="gap-2"
-          >
-            <Save className="w-4 h-4" />
-            Update Lick
-          </Button>
-        </div>
+        {/* Update button for editing mode */}
+        {isEditing && onSave && (
+          <div className="mt-4 flex justify-end">
+            <Button
+              onClick={onSave}
+              disabled={!canSave}
+              className="gap-2"
+            >
+              <Save className="w-4 h-4" />
+              Update Lick
+            </Button>
+          </div>
+        )}
+        </>
       )}
     </Card>
   );
