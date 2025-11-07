@@ -3,6 +3,8 @@ import { Card } from "./ui/card";
 import { Play, Square } from "lucide-react";
 import { NPCCharacter } from "./NPCCharacter";
 import { TurnIndicator } from "./TurnIndicator";
+import { BattleDebugPanel } from "./BattleDebugPanel";
+import { RealTimeNotesDisplay } from "./RealTimeNotesDisplay";
 import { useBattleMode } from "@/hooks/useBattleMode";
 import { Lick } from "@/types/lick";
 import { RecordedNote } from "@/types/recording";
@@ -19,6 +21,8 @@ interface BattleModeProps {
   onResetRecognizedLicks: () => void;
   currentBeat: number;
   isMetronomePlaying: boolean;
+  timingTolerance: number;
+  isRecording: boolean;
 }
 
 export const BattleMode = ({
@@ -32,13 +36,16 @@ export const BattleMode = ({
   recognizedPoints,
   onResetRecognizedLicks,
   currentBeat,
-  isMetronomePlaying
+  isMetronomePlaying,
+  timingTolerance,
+  isRecording
 }: BattleModeProps) => {
 
   const {
     gameState,
     currentBar,
     playerScore,
+    turnPointsEarned,
     npcMessage,
     TOTAL_BARS,
     startGame,
@@ -152,6 +159,27 @@ export const BattleMode = ({
         <p className="text-center text-sm text-muted-foreground">
           You need to create some licks first! Record and save licks above to unlock Battle Mode.
         </p>
+      )}
+
+      {/* Debug Panels */}
+      {isGameActive && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <RealTimeNotesDisplay
+            notes={recordedNotes}
+            isRecording={isRecording && gameState === "player-turn"}
+            currentBeat={currentBeat}
+          />
+          <BattleDebugPanel
+            gameState={gameState}
+            currentBar={currentBar}
+            recordedNotes={recordedNotes}
+            licks={licks}
+            timingTolerance={timingTolerance}
+            turnPointsEarned={turnPointsEarned}
+            totalScore={playerScore}
+            isRecording={isRecording && gameState === "player-turn"}
+          />
+        </div>
       )}
 
       {gameState === "game-over" && (

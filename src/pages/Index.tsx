@@ -578,6 +578,8 @@ const Index = () => {
             onResetRecognizedLicks={resetRecognizedLicks}
             currentBeat={metronome.currentBeat}
             isMetronomePlaying={metronome.isPlaying}
+            timingTolerance={timingTolerance}
+            isRecording={metronome.isPlaying}
           />
         </div>
 

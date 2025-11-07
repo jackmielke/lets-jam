@@ -31,12 +31,17 @@ export const useBattleMode = ({
   const [gameState, setGameState] = useState<GameState>("waiting");
   const [currentBar, setCurrentBar] = useState(0);
   const [playerScore, setPlayerScore] = useState(0);
+  const [turnPointsEarned, setTurnPointsEarned] = useState(0);
   const [npcMessage, setNpcMessage] = useState<string>("");
   const turnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scoreSnapshotRef = useRef(0);
   const barIndexRef = useRef(0);
   const recognizedPointsRef = useRef(recognizedPoints);
+  
+  // Track points earned this turn
   useEffect(() => {
+    const pointsThisTurn = Math.max(0, recognizedPoints - scoreSnapshotRef.current);
+    setTurnPointsEarned(pointsThisTurn);
     recognizedPointsRef.current = recognizedPoints;
   }, [recognizedPoints]);
 
@@ -109,6 +114,7 @@ export const useBattleMode = ({
       onClearRecording();
       onResetRecognizedLicks(); // Allow same licks to be recognized again this turn
       scoreSnapshotRef.current = recognizedPointsRef.current;
+      setTurnPointsEarned(0); // Reset turn points display
       console.log(`🎮 Player turn ${barNumber}: Score snapshot = ${scoreSnapshotRef.current}`);
 
       // End player bar after one bar, add points, then advance
@@ -117,10 +123,12 @@ export const useBattleMode = ({
         const pointsEarned = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
         setPlayerScore(prev => prev + pointsEarned);
         console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
+        console.log(`   📊 Notes played: ${recordedNotes.length}, Licks available: ${licks.length}`);
         if (pointsEarned > 0) {
           toast.success(`+${pointsEarned} points!`);
         } else {
-          console.warn(`⚠️ No points earned this turn (or negative prevented)`);
+          toast.info("No licks recognized this turn");
+          console.warn(`⚠️ No points earned this turn`);
         }
         barIndexRef.current += 1;
         runBar();
@@ -176,6 +184,7 @@ export const useBattleMode = ({
     gameState,
     currentBar,
     playerScore,
+    turnPointsEarned,
     npcMessage,
     TOTAL_BARS,
     startGame,
