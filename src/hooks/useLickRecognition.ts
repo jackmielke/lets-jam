@@ -42,12 +42,15 @@ export const useLickRecognition = ({
     let totalAccuracy = 0;
     let matchedNotes = 0;
 
+    console.log(`  🎵 Checking lick "${lick.name}" (${lick.notes.length} notes, tolerance: ${timingTolerance}ms):`);
+
     for (let i = 0; i < lick.notes.length; i++) {
       const playedNote = recentNotes[i];
       const lickNote = lick.notes[i];
 
       // Check if note ID matches
       if (playedNote.soundId !== lickNote.soundId) {
+        console.log(`    ❌ Note ${i}: Wrong note (expected ${lickNote.noteName}, got ${playedNote.noteName})`);
         return { matches: false, accuracy: 0 };
       }
 
@@ -56,8 +59,11 @@ export const useLickRecognition = ({
       const playedTime = (playedNote.beatNumber - 1 + playedNote.subdivision) * beatDuration;
       const timeDiff = Math.abs(expectedTime - playedTime);
 
+      console.log(`    🎹 Note ${i} (${playedNote.noteName}): timing diff = ${timeDiff.toFixed(1)}ms`);
+
       // If timing is too far off, not a match
       if (timeDiff > timingTolerance) {
+        console.log(`    ❌ Timing too far off (${timeDiff.toFixed(1)}ms > ${timingTolerance}ms)`);
         return { matches: false, accuracy: 0 };
       }
 
@@ -68,6 +74,7 @@ export const useLickRecognition = ({
     }
 
     const averageAccuracy = totalAccuracy / matchedNotes;
+    console.log(`    ✅ Match! Average accuracy: ${averageAccuracy.toFixed(1)}%`);
     return { matches: true, accuracy: averageAccuracy };
   }, [beatDuration, timingTolerance]);
 
@@ -86,6 +93,7 @@ export const useLickRecognition = ({
       if (recordedNotes.length === 0 && !isRecording) {
         recognizedLickIdsRef.current.clear();
         lastCheckIndexRef.current = 0;
+        console.log("🔄 Lick recognition reset (not recording)");
       }
       return;
     }
@@ -95,6 +103,7 @@ export const useLickRecognition = ({
       return;
     }
 
+    console.log(`🔍 Checking for licks... (${recordedNotes.length} notes recorded, last check at ${lastCheckIndexRef.current})`);
     lastCheckIndexRef.current = recordedNotes.length;
 
     // Check each lick for a match
@@ -119,7 +128,7 @@ export const useLickRecognition = ({
           points
         };
 
-        console.log(`🎯 Lick recognized: ${lick.name}, Points: ${points}, Accuracy: ${result.accuracy.toFixed(1)}%`);
+        console.log(`✅ Lick recognized: ${lick.name}, Points: ${points}, Accuracy: ${result.accuracy.toFixed(1)}%`);
 
         // Update score
         setTotalScore(prev => prev + points);
@@ -148,9 +157,15 @@ export const useLickRecognition = ({
     lastCheckIndexRef.current = 0;
   }, []);
 
+  const resetRecognizedLicks = useCallback(() => {
+    recognizedLickIdsRef.current.clear();
+    console.log("🔄 Recognized licks cleared (for new turn)");
+  }, []);
+
   return {
     totalScore,
     recentRecognition,
-    resetScore
+    resetScore,
+    resetRecognizedLicks
   };
 };

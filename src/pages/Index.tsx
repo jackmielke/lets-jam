@@ -279,7 +279,7 @@ const Index = () => {
   });
 
   // Lick recognition
-  const { totalScore, recentRecognition, resetScore } = useLickRecognition({
+  const { totalScore, recentRecognition, resetScore, resetRecognizedLicks } = useLickRecognition({
     licks,
     recordedNotes,
     isRecording: metronome.isPlaying,
@@ -575,6 +575,7 @@ const Index = () => {
             recordedNotes={recordedNotes}
             onClearRecording={handleClearRecording}
             recognizedPoints={totalScore}
+            onResetRecognizedLicks={resetRecognizedLicks}
           />
         </div>
 

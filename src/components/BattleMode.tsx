@@ -16,6 +16,7 @@ interface BattleModeProps {
   recordedNotes: RecordedNote[];
   onClearRecording: () => void;
   recognizedPoints: number;
+  onResetRecognizedLicks: () => void;
 }
 
 export const BattleMode = ({
@@ -26,7 +27,8 @@ export const BattleMode = ({
   bpm,
   recordedNotes,
   onClearRecording,
-  recognizedPoints
+  recognizedPoints,
+  onResetRecognizedLicks
 }: BattleModeProps) => {
   const {
     gameState,
@@ -44,7 +46,8 @@ export const BattleMode = ({
     bpm,
     recordedNotes,
     onClearRecording,
-    recognizedPoints
+    recognizedPoints,
+    onResetRecognizedLicks
   });
 
   const isGameActive = gameState !== "waiting" && gameState !== "game-over";

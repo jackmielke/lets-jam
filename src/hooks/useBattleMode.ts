@@ -14,6 +14,7 @@ interface UseBattleModeProps {
   recordedNotes: RecordedNote[];
   onClearRecording: () => void;
   recognizedPoints: number;
+  onResetRecognizedLicks: () => void;
 }
 
 export const useBattleMode = ({
@@ -24,7 +25,8 @@ export const useBattleMode = ({
   bpm,
   recordedNotes,
   onClearRecording,
-  recognizedPoints
+  recognizedPoints,
+  onResetRecognizedLicks
 }: UseBattleModeProps) => {
   const [gameState, setGameState] = useState<GameState>("waiting");
   const [currentBar, setCurrentBar] = useState(0);
@@ -105,13 +107,16 @@ export const useBattleMode = ({
 
       // Prepare for player's recording window
       onClearRecording();
+      onResetRecognizedLicks(); // Allow same licks to be recognized again this turn
       scoreSnapshotRef.current = recognizedPointsRef.current;
+      console.log(`🎮 Player turn ${barNumber}: Score snapshot = ${scoreSnapshotRef.current}`);
 
       // End player bar after one bar, add points, then advance
       clearTurnTimeout();
       turnTimeoutRef.current = setTimeout(() => {
         const pointsEarned = recognizedPointsRef.current - scoreSnapshotRef.current;
         setPlayerScore(prev => prev + pointsEarned);
+        console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
         if (pointsEarned > 0) {
           toast.success(`+${pointsEarned} points!`);
         }
@@ -119,7 +124,7 @@ export const useBattleMode = ({
         runBar();
       }, barDuration);
     }
-  }, [TOTAL_BARS, barDuration, endGame, onClearRecording, playNPCTurn]);
+  }, [TOTAL_BARS, barDuration, endGame, onClearRecording, onResetRecognizedLicks, playNPCTurn]);
 
   const startGame = useCallback(() => {
     if (licks.length === 0) {
