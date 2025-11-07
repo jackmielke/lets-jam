@@ -98,6 +98,11 @@ export const useBattleMode = ({
     if (isNpcTurn) {
       setGameState("npc-turn");
       setNpcMessage("DJ KeyKid's turn!");
+      
+      // Clear recordings at start of NPC turn to prepare for next player turn
+      // This preserves any anticipatory notes played late in the previous NPC turn
+      onClearRecording();
+      
       playNPCTurn();
 
       // Schedule next bar
@@ -111,7 +116,8 @@ export const useBattleMode = ({
       setNpcMessage("your turn!");
 
       // Prepare for player's recording window
-      onClearRecording();
+      // Note: We DON'T clear recordings here - that happens at start of NPC turn
+      // This allows anticipatory notes from the end of the previous bar to be preserved
       onResetRecognizedLicks(); // Allow same licks to be recognized again this turn
       scoreSnapshotRef.current = recognizedPointsRef.current;
       setTurnPointsEarned(0); // Reset turn points display
