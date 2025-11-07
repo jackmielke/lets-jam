@@ -108,11 +108,6 @@ export const useLickRecognition = ({
 
     // Check each lick for a match
     for (const lick of licks) {
-      // Skip if already recognized in this recording session
-      if (recognizedLickIdsRef.current.has(lick.id)) {
-        continue;
-      }
-
       const result = matchesLick(recordedNotes, lick);
       
       if (result.matches) {
