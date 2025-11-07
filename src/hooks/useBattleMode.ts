@@ -94,20 +94,26 @@ export const useBattleMode = ({
         toast.success(`+${pointsEarned} points!`);
       }
 
+      // Check if game should end after player's turn
       if (playerBar >= TOTAL_BARS) {
         endGame();
-      } else {
-        // Move to next bar for NPC
-        const npcBar = playerBar + 1;
-        setCurrentBar(npcBar);
-        setGameState("npc-turn");
-        playNPCTurn();
-        
-        // After NPC plays for one bar, player's turn
-        turnTimeoutRef.current = setTimeout(() => {
-          startPlayerTurn();
-        }, barDuration);
+        return;
       }
+      
+      // Move to next bar for NPC
+      const npcBar = playerBar + 1;
+      setCurrentBar(npcBar);
+      setGameState("npc-turn");
+      playNPCTurn();
+      
+      // After NPC plays for one bar, check if game should end
+      turnTimeoutRef.current = setTimeout(() => {
+        if (npcBar >= TOTAL_BARS) {
+          endGame();
+        } else {
+          startPlayerTurn();
+        }
+      }, barDuration);
     }, barDuration);
   }, [currentBar, barDuration, onClearRecording, recognizedPoints, playNPCTurn, endGame, playerScore]);
 
