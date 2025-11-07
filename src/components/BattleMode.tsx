@@ -19,6 +19,7 @@ interface BattleModeProps {
   onClearRecording: () => void;
   recognizedPoints: number;
   onResetRecognizedLicks: () => void;
+  onResetScore: () => void;
   currentBeat: number;
   isMetronomePlaying: boolean;
   timingTolerance: number;
@@ -35,6 +36,7 @@ export const BattleMode = ({
   onClearRecording,
   recognizedPoints,
   onResetRecognizedLicks,
+  onResetScore,
   currentBeat,
   isMetronomePlaying,
   timingTolerance,
@@ -60,7 +62,8 @@ export const BattleMode = ({
     recordedNotes,
     onClearRecording,
     recognizedPoints,
-    onResetRecognizedLicks
+    onResetRecognizedLicks,
+    onResetScore
   });
 
   const isGameActive = gameState !== "waiting" && gameState !== "game-over";
@@ -120,7 +123,7 @@ export const BattleMode = ({
                       className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all duration-300 ${
                         isCurrent
                           ? 'border-primary bg-primary/10 scale-110'
-                          : isPast && score !== undefined
+                          : isPast
                           ? 'border-border bg-card'
                           : 'border-border/50 bg-background/50 opacity-50'
                       }`}

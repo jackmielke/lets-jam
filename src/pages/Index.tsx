@@ -576,6 +576,7 @@ const Index = () => {
             onClearRecording={handleClearRecording}
             recognizedPoints={totalScore}
             onResetRecognizedLicks={resetRecognizedLicks}
+            onResetScore={resetScore}
             currentBeat={metronome.currentBeat}
             isMetronomePlaying={metronome.isPlaying}
             timingTolerance={timingTolerance}

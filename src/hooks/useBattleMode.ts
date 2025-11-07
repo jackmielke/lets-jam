@@ -15,6 +15,7 @@ interface UseBattleModeProps {
   onClearRecording: () => void;
   recognizedPoints: number;
   onResetRecognizedLicks: () => void;
+  onResetScore: () => void;
 }
 
 export const useBattleMode = ({
@@ -26,7 +27,8 @@ export const useBattleMode = ({
   recordedNotes,
   onClearRecording,
   recognizedPoints,
-  onResetRecognizedLicks
+  onResetRecognizedLicks,
+  onResetScore
 }: UseBattleModeProps) => {
   const [gameState, setGameState] = useState<GameState>("waiting");
   const [currentBar, setCurrentBar] = useState(0);
@@ -80,8 +82,10 @@ export const useBattleMode = ({
     onStopMetronome();
     clearTurnTimeout();
     
-    const finalScore = playerScore + (recognizedPoints - scoreSnapshotRef.current);
+    const finalScore = playerScore + Math.max(0, recognizedPoints - scoreSnapshotRef.current);
     setPlayerScore(finalScore);
+    
+    console.log(`🏁 Battle ended: Final score = ${finalScore} (player: ${playerScore}, last turn: ${Math.max(0, recognizedPoints - scoreSnapshotRef.current)})`);
     
     setNpcMessage("alright battle's over!");
     toast.success(`Battle over! Final score: ${finalScore} points`);
@@ -160,12 +164,17 @@ export const useBattleMode = ({
       return;
     }
 
+    // Reset score to start fresh for this battle
+    onResetScore();
+    
     setGameState("count-in");
     setCurrentBar(0);
     setPlayerScore(0);
     setBarScores(new Map());
     scoreSnapshotRef.current = 0;
     onClearRecording();
+    
+    console.log("🎮 Battle starting: Score reset to 0");
     
     setNpcMessage("yo let's jam!");
     toast.info("Get ready! Count-in starting...");
@@ -179,7 +188,7 @@ export const useBattleMode = ({
       barIndexRef.current = 1;
       runBar();
     }, barDuration);
-  }, [licks.length, onStartMetronome, onClearRecording, runBar, barDuration]);
+  }, [licks.length, onStartMetronome, onClearRecording, onResetScore, runBar, barDuration]);
 
   const stopGame = useCallback(() => {
     setGameState("waiting");
