@@ -6,6 +6,7 @@ import { TurnIndicator } from "./TurnIndicator";
 import { useBattleMode } from "@/hooks/useBattleMode";
 import { Lick } from "@/types/lick";
 import { RecordedNote } from "@/types/recording";
+import { useMetronome } from "@/hooks/useMetronome";
 
 interface BattleModeProps {
   licks: Lick[];
@@ -30,6 +31,8 @@ export const BattleMode = ({
   recognizedPoints,
   onResetRecognizedLicks
 }: BattleModeProps) => {
+  const metronome = useMetronome({ bpm, beatsPerBar: 4 });
+
   const {
     gameState,
     currentBar,
@@ -64,12 +67,36 @@ export const BattleMode = ({
       </div>
 
       {gameState !== "waiting" && (
-        <TurnIndicator
-          currentTurn={gameState}
-          barNumber={currentBar}
-          totalBars={TOTAL_BARS}
-          playerScore={playerScore}
-        />
+        <>
+          <TurnIndicator
+            currentTurn={gameState}
+            barNumber={currentBar}
+            totalBars={TOTAL_BARS}
+            playerScore={playerScore}
+          />
+          
+          {/* Battle Metronome */}
+          {isGameActive && (
+            <div className="flex justify-center items-center gap-3 py-4 px-6 bg-card/50 rounded-lg border border-border">
+              <span className="text-sm font-medium text-muted-foreground">Beat:</span>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map((beat) => (
+                  <div
+                    key={beat}
+                    className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all duration-100 ${
+                      metronome.currentBeat === beat
+                        ? 'bg-primary border-primary text-primary-foreground scale-110 shadow-lg'
+                        : 'border-border text-muted-foreground bg-background'
+                    }`}
+                  >
+                    {beat}
+                  </div>
+                ))}
+              </div>
+              <span className="text-sm font-medium text-muted-foreground ml-2">{bpm} BPM</span>
+            </div>
+          )}
+        </>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
