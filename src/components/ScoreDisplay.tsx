@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Trophy, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 interface RecognitionResult {
   lick: {
@@ -15,9 +17,11 @@ interface ScoreDisplayProps {
   score: number;
   recentRecognition: RecognitionResult | null;
   onReset: () => void;
+  timingTolerance: number;
+  onToleranceChange: (value: number) => void;
 }
 
-export const ScoreDisplay = ({ score, recentRecognition, onReset }: ScoreDisplayProps) => {
+export const ScoreDisplay = ({ score, recentRecognition, onReset, timingTolerance, onToleranceChange }: ScoreDisplayProps) => {
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -61,6 +65,30 @@ export const ScoreDisplay = ({ score, recentRecognition, onReset }: ScoreDisplay
             Start the metronome and play your saved licks to earn points!
           </p>
         )}
+      </div>
+
+      {/* Timing Tolerance Slider */}
+      <div className="mt-6 pt-6 border-t border-border space-y-3">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="tolerance-slider" className="text-sm font-medium">
+            Timing Tolerance
+          </Label>
+          <span className="text-sm font-mono text-muted-foreground">
+            {timingTolerance}ms
+          </span>
+        </div>
+        <Slider
+          id="tolerance-slider"
+          min={50}
+          max={300}
+          step={10}
+          value={[timingTolerance]}
+          onValueChange={(values) => onToleranceChange(values[0])}
+          className="w-full"
+        />
+        <p className="text-xs text-muted-foreground">
+          Lower = stricter timing • Higher = more forgiving
+        </p>
       </div>
     </Card>
   );

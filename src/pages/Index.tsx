@@ -99,6 +99,7 @@ const Index = () => {
     total: 0,
     lastUpdate: Date.now()
   });
+  const [timingTolerance, setTimingTolerance] = useState(150); // ms tolerance for lick recognition
 
   // Metronome for rhythm tracking
   const metronome = useMetronome({
@@ -283,6 +284,7 @@ const Index = () => {
     recordedNotes,
     isRecording: metronome.isPlaying,
     beatDuration: metronome.beatDuration,
+    timingTolerance,
     onLickRecognized: (result) => {
       toast.success(
         `🎯 ${result.lick.name} recognized! +${result.points} points (${Math.round(result.accuracy)}% accuracy)`,
@@ -557,6 +559,8 @@ const Index = () => {
             score={totalScore}
             recentRecognition={recentRecognition}
             onReset={resetScore}
+            timingTolerance={timingTolerance}
+            onToleranceChange={setTimingTolerance}
           />
         </div>
 

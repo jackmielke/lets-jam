@@ -13,6 +13,7 @@ interface UseLickRecognitionProps {
   recordedNotes: RecordedNote[];
   isRecording: boolean;
   beatDuration: number; // milliseconds per beat
+  timingTolerance?: number; // milliseconds deviation allowed (default 150ms)
   onLickRecognized?: (result: RecognitionResult) => void;
 }
 
@@ -21,6 +22,7 @@ export const useLickRecognition = ({
   recordedNotes,
   isRecording,
   beatDuration,
+  timingTolerance = 150,
   onLickRecognized
 }: UseLickRecognitionProps) => {
   const [totalScore, setTotalScore] = useState(0);
@@ -36,9 +38,6 @@ export const useLickRecognition = ({
 
     // Check the last N notes where N = lick length
     const recentNotes = notes.slice(-lick.notes.length);
-    
-    // Calculate timing tolerance (allow 100ms deviation)
-    const timingTolerance = 100; // ms
     
     let totalAccuracy = 0;
     let matchedNotes = 0;
@@ -70,7 +69,7 @@ export const useLickRecognition = ({
 
     const averageAccuracy = totalAccuracy / matchedNotes;
     return { matches: true, accuracy: averageAccuracy };
-  }, [beatDuration]);
+  }, [beatDuration, timingTolerance]);
 
   // Calculate points based on difficulty and accuracy
   const calculatePoints = useCallback((lick: Lick, accuracy: number): number => {
