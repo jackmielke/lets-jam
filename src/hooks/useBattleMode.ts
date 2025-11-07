@@ -34,6 +34,7 @@ export const useBattleMode = ({
   const [turnPointsEarned, setTurnPointsEarned] = useState(0);
   const [npcMessage, setNpcMessage] = useState<string>("");
   const turnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pointsTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const scoreSnapshotRef = useRef(0);
   const barIndexRef = useRef(0);
   const recognizedPointsRef = useRef(recognizedPoints);
@@ -54,6 +55,8 @@ export const useBattleMode = ({
       clearTimeout(turnTimeoutRef.current);
       turnTimeoutRef.current = null;
     }
+    pointsTimeoutsRef.current.forEach(clearTimeout);
+    pointsTimeoutsRef.current = [];
   }, []);
 
   const playNPCTurn = useCallback(() => {
@@ -123,25 +126,29 @@ export const useBattleMode = ({
       setTurnPointsEarned(0); // Reset turn points display
       console.log(`🎮 Player turn ${barNumber}: Score snapshot = ${scoreSnapshotRef.current}`);
 
-      // End player bar after one bar, add grace period, then calculate points
+      // Schedule bar advancement after exactly barDuration (no delay)
       clearTurnTimeout();
       turnTimeoutRef.current = setTimeout(() => {
-        // Add 150ms grace period for lick recognition to process final notes
-        turnTimeoutRef.current = setTimeout(() => {
-          const pointsEarned = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
-          setPlayerScore(prev => prev + pointsEarned);
-          console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
-          console.log(`   📊 Notes played: ${recordedNotes.length}, Licks available: ${licks.length}`);
-          if (pointsEarned > 0) {
-            toast.success(`+${pointsEarned} points!`);
-          } else {
-            toast.info("No licks recognized this turn");
-            console.warn(`⚠️ No points earned this turn`);
-          }
-          barIndexRef.current += 1;
-          runBar();
-        }, 150); // Grace period for note processing
+        barIndexRef.current += 1;
+        runBar();
       }, barDuration);
+
+      // Calculate points 150ms after bar ends (grace period for recognition)
+      const pointsTimeoutId = setTimeout(() => {
+        const pointsEarned = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
+        setPlayerScore(prev => prev + pointsEarned);
+        console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
+        console.log(`   📊 Notes played: ${recordedNotes.length}, Licks available: ${licks.length}`);
+        if (pointsEarned > 0) {
+          toast.success(`+${pointsEarned} points!`);
+        } else {
+          toast.info("No licks recognized this turn");
+          console.warn(`⚠️ No points earned this turn`);
+        }
+      }, barDuration + 150);
+      
+      // Track points timeout so it can be cleared if game stops
+      pointsTimeoutsRef.current.push(pointsTimeoutId);
     }
   }, [TOTAL_BARS, barDuration, endGame, onClearRecording, onResetRecognizedLicks, playNPCTurn]);
 
