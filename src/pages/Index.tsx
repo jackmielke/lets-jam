@@ -592,16 +592,14 @@ const Index = () => {
         />
 
         {/* Lick Editor */}
-        {recordedNotes.length > 0 && (
-          <LickEditor 
-            notes={recordedNotes}
-            onUpdateNote={handleUpdateNote}
-            beatsPerBar={4}
-            isEditing={!!editingLickId}
-            onSave={editingLickId ? handleSaveLick : undefined}
-            canSave={!!lickName.trim()}
-          />
-        )}
+        <LickEditor 
+          notes={recordedNotes}
+          onUpdateNote={handleUpdateNote}
+          beatsPerBar={4}
+          isEditing={!!editingLickId}
+          onSave={editingLickId ? handleSaveLick : undefined}
+          canSave={!!lickName.trim()}
+        />
 
         {/* Background Music */}
         <div className="space-y-4">

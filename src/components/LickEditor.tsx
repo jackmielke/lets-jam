@@ -17,12 +17,12 @@ const subdivisions = [0, 0.25, 0.5, 0.75];
 
 export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = false, onSave, canSave = true }: LickEditorProps) => {
   const [draggedNoteIndex, setDraggedNoteIndex] = useState<number | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
-  if (notes.length === 0) return null;
+  const hasNotes = notes.length > 0;
 
   // Find the beat range
-  const maxBeat = Math.max(...notes.map(n => n.beatNumber), beatsPerBar);
+  const maxBeat = hasNotes ? Math.max(...notes.map(n => n.beatNumber), beatsPerBar) : beatsPerBar;
   const beats = Array.from({ length: maxBeat }, (_, i) => i + 1);
 
   const handleDragStart = (index: number) => {
@@ -47,7 +47,9 @@ export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = f
           <Edit3 className="w-5 h-5 text-primary" />
           <h3 className="text-xl font-semibold">Lick Editor</h3>
           <span className="text-sm text-muted-foreground">
-            {isCollapsed ? `${notes.length} notes` : "Drag notes to adjust timing"}
+            {isCollapsed 
+              ? (hasNotes ? `${notes.length} notes` : "No notes recorded") 
+              : (hasNotes ? "Drag notes to adjust timing" : "Record some notes to edit")}
           </span>
         </div>
         <Button
@@ -72,7 +74,13 @@ export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = f
 
       {!isCollapsed && (
         <>
-          <div className="overflow-x-auto">
+          {!hasNotes ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Start the metronome and play some keys to record notes.</p>
+              <p className="text-sm mt-2">Or click "Edit" on a saved lick to modify it.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
         <div className="min-w-[600px]">
           {/* Header with beat numbers */}
           <div className="flex border-b border-border mb-2 pb-2">
@@ -150,6 +158,7 @@ export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = f
           </div>
         </div>
       </div>
+          )}
 
         {/* Update button for editing mode */}
         {isEditing && onSave && (
