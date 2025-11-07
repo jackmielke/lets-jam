@@ -456,6 +456,20 @@ const Index = () => {
           />
         </div>
 
+        {/* Battle Mode */}
+        <div className="space-y-4">
+          <BattleMode
+            licks={licks}
+            onPlayLick={playLick}
+            onStartMetronome={metronome.start}
+            onStopMetronome={metronome.stop}
+            bpm={metronomeBpm}
+            recordedNotes={recordedNotes}
+            onClearRecording={handleClearRecording}
+            recognizedPoints={totalScore}
+          />
+        </div>
+
         {/* Background Music */}
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-center">Background Music</h3>
@@ -476,20 +490,6 @@ const Index = () => {
             />
             <SampleLibrary refreshTrigger={sampleRefreshTrigger} />
           </div>
-        </div>
-
-        {/* Battle Mode */}
-        <div className="space-y-4">
-          <BattleMode
-            licks={licks}
-            onPlayLick={playLick}
-            onStartMetronome={metronome.start}
-            onStopMetronome={metronome.stop}
-            bpm={metronomeBpm}
-            recordedNotes={recordedNotes}
-            onClearRecording={handleClearRecording}
-            recognizedPoints={totalScore}
-          />
         </div>
 
         {/* Lick Editor */}
