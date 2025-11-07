@@ -12,12 +12,18 @@ export const useAudioEngine = () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    // Resume if suspended (browser autoplay policy)
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
     return audioContextRef.current;
   }, []);
 
   const playSound = useCallback((type: SoundType, frequency?: number) => {
     const audioContext = getAudioContext();
-    const currentTime = audioContext.currentTime;
+    
+    // Use high-precision scheduling - start sounds slightly ahead
+    const currentTime = audioContext.currentTime + 0.005;
     const noteFreq = frequency || 261.63;
     const noteId = `${noteFreq}-${Date.now()}`;
 
