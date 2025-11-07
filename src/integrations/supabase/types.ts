@@ -38,6 +38,65 @@ export type Database = {
         }
         Relationships: []
       }
+      licks: {
+        Row: {
+          bpm: number
+          created_at: string
+          difficulty: number | null
+          id: string
+          name: string
+          notes: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bpm: number
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          name: string
+          notes: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bpm?: number
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          name?: string
+          notes?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
