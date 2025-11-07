@@ -406,6 +406,54 @@ const Index = () => {
           </p>
         </header>
 
+        {/* Instrument Selector */}
+        <div className="space-y-2">
+          <div className="flex justify-center items-center gap-3">
+            <span className="text-sm text-muted-foreground">Audio System:</span>
+            {isReady ? (
+              <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-500 font-medium">
+                Ready
+              </span>
+            ) : (
+              <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-500 font-medium">
+                Initializing...
+              </span>
+            )}
+          </div>
+          <div className="flex justify-center gap-2 flex-wrap">
+            <Button
+              variant={instrumentType === "roblox" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("roblox")}
+            >
+              Roblox (Low Latency)
+            </Button>
+            <Button
+              variant={instrumentType === "synth" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("synth")}
+            >
+              Synth
+            </Button>
+            <Button
+              variant={instrumentType === "organ" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("organ")}
+            >
+              Church Organ
+            </Button>
+            <Button
+              variant={instrumentType === "guitar" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("guitar")}
+            >
+              Electric Guitar
+            </Button>
+          </div>
+        </div>
+
+        <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
+
         {/* Metronome, Recording & Score */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Metronome
@@ -470,28 +518,6 @@ const Index = () => {
           />
         </div>
 
-        {/* Background Music */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-center">Background Music</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <BackgroundMusicUpload 
-              onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)}
-            />
-            <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
-          </div>
-        </div>
-
-        {/* Audio Samples */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-center">Audio Samples</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <SampleRecorder 
-              onSampleSaved={() => setSampleRefreshTrigger(prev => prev + 1)}
-            />
-            <SampleLibrary refreshTrigger={sampleRefreshTrigger} />
-          </div>
-        </div>
-
         {/* Lick Editor */}
         {recordedNotes.length > 0 && (
           <LickEditor 
@@ -521,53 +547,27 @@ const Index = () => {
           isPlaying={isPlayingSequence}
         />
 
-        {/* Instrument Selector */}
-        <div className="space-y-2">
-          <div className="flex justify-center items-center gap-3">
-            <span className="text-sm text-muted-foreground">Audio System:</span>
-            {isReady ? (
-              <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-500 font-medium">
-                Ready
-              </span>
-            ) : (
-              <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-500 font-medium">
-                Initializing...
-              </span>
-            )}
-          </div>
-          <div className="flex justify-center gap-2 flex-wrap">
-            <Button
-              variant={instrumentType === "roblox" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setInstrumentType("roblox")}
-            >
-              Roblox (Low Latency)
-            </Button>
-            <Button
-              variant={instrumentType === "synth" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setInstrumentType("synth")}
-            >
-              Synth
-            </Button>
-            <Button
-              variant={instrumentType === "organ" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setInstrumentType("organ")}
-            >
-              Church Organ
-            </Button>
-            <Button
-              variant={instrumentType === "guitar" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setInstrumentType("guitar")}
-            >
-              Electric Guitar
-            </Button>
+        {/* Background Music */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-center">Background Music</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <BackgroundMusicUpload 
+              onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)}
+            />
+            <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
           </div>
         </div>
 
-        <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
+        {/* Audio Samples */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-center">Audio Samples</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <SampleRecorder 
+              onSampleSaved={() => setSampleRefreshTrigger(prev => prev + 1)}
+            />
+            <SampleLibrary refreshTrigger={sampleRefreshTrigger} />
+          </div>
+        </div>
 
         {/* Sequencer Controls */}
         <div className="space-y-4">
