@@ -114,11 +114,13 @@ export const useBattleMode = ({
       // End player bar after one bar, add points, then advance
       clearTurnTimeout();
       turnTimeoutRef.current = setTimeout(() => {
-        const pointsEarned = recognizedPointsRef.current - scoreSnapshotRef.current;
+        const pointsEarned = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
         setPlayerScore(prev => prev + pointsEarned);
         console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
         if (pointsEarned > 0) {
           toast.success(`+${pointsEarned} points!`);
+        } else {
+          console.warn(`⚠️ No points earned this turn (or negative prevented)`);
         }
         barIndexRef.current += 1;
         runBar();
