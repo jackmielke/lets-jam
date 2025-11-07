@@ -6,7 +6,6 @@ import { TurnIndicator } from "./TurnIndicator";
 import { useBattleMode } from "@/hooks/useBattleMode";
 import { Lick } from "@/types/lick";
 import { RecordedNote } from "@/types/recording";
-import { useMetronome } from "@/hooks/useMetronome";
 
 interface BattleModeProps {
   licks: Lick[];
@@ -18,6 +17,8 @@ interface BattleModeProps {
   onClearRecording: () => void;
   recognizedPoints: number;
   onResetRecognizedLicks: () => void;
+  currentBeat: number;
+  isMetronomePlaying: boolean;
 }
 
 export const BattleMode = ({
@@ -29,9 +30,10 @@ export const BattleMode = ({
   recordedNotes,
   onClearRecording,
   recognizedPoints,
-  onResetRecognizedLicks
+  onResetRecognizedLicks,
+  currentBeat,
+  isMetronomePlaying
 }: BattleModeProps) => {
-  const metronome = useMetronome({ bpm, beatsPerBar: 4 });
 
   const {
     gameState,
@@ -76,7 +78,7 @@ export const BattleMode = ({
           />
           
           {/* Battle Metronome */}
-          {isGameActive && (
+          {isGameActive && isMetronomePlaying && (
             <div className="flex justify-center items-center gap-3 py-4 px-6 bg-card/50 rounded-lg border border-border">
               <span className="text-sm font-medium text-muted-foreground">Beat:</span>
               <div className="flex gap-2">
@@ -84,7 +86,7 @@ export const BattleMode = ({
                   <div
                     key={beat}
                     className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all duration-100 ${
-                      metronome.currentBeat === beat
+                      currentBeat === beat
                         ? 'bg-primary border-primary text-primary-foreground scale-110 shadow-lg'
                         : 'border-border text-muted-foreground bg-background'
                     }`}
