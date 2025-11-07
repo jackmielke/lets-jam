@@ -56,6 +56,7 @@ export const useAudioEngine = () => {
   }, []);
 
   const playSound = useCallback((type: SoundType, frequency?: number) => {
+    const startTime = performance.now();
     const audioContext = getAudioContext();
     
     // Use immediate scheduling for lowest latency
@@ -65,6 +66,12 @@ export const useAudioEngine = () => {
 
     // Add to active notes for polyphony tracking
     activeNotesRef.current.add(noteId);
+    
+    // Log latency (comment out in production)
+    const scheduleLatency = performance.now() - startTime;
+    if (scheduleLatency > 5) {
+      console.warn(`Audio scheduling took ${scheduleLatency.toFixed(2)}ms`);
+    }
     
     // Calculate volume reduction based on active notes (prevent clipping)
     const polyphonyFactor = Math.min(1, 3 / Math.max(1, activeNotesRef.current.size));

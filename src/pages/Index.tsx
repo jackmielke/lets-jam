@@ -106,9 +106,14 @@ const Index = () => {
   }, [licks]);
 
   const handlePlaySound = useCallback((soundId: string) => {
+    const keyPressTime = performance.now();
     const sound = drumSounds.find((s) => s.id === soundId);
     if (sound) {
       playSound(sound.type, sound.frequency);
+      const handlerLatency = performance.now() - keyPressTime;
+      if (handlerLatency > 2) {
+        console.warn(`Key handler took ${handlerLatency.toFixed(2)}ms`);
+      }
       setPressedKeyId(soundId);
       setTimeout(() => setPressedKeyId(null), 200);
 
