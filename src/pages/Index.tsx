@@ -73,7 +73,7 @@ const drumSounds: DrumSound[] = [
 ];
 
 const Index = () => {
-  const { playSound, instrumentType, setInstrumentType } = useAudioEngine();
+  const { playSound, instrumentType, setInstrumentType, isReady } = useAudioEngine();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
   const [metronomeBpm, setMetronomeBpm] = useState(120);
@@ -522,35 +522,49 @@ const Index = () => {
         />
 
         {/* Instrument Selector */}
-        <div className="flex justify-center gap-2 flex-wrap mb-4">
-          <Button
-            variant={instrumentType === "roblox" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setInstrumentType("roblox")}
-          >
-            Roblox
-          </Button>
-          <Button
-            variant={instrumentType === "synth" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setInstrumentType("synth")}
-          >
-            Synth
-          </Button>
-          <Button
-            variant={instrumentType === "organ" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setInstrumentType("organ")}
-          >
-            Church Organ
-          </Button>
-          <Button
-            variant={instrumentType === "guitar" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setInstrumentType("guitar")}
-          >
-            Electric Guitar
-          </Button>
+        <div className="space-y-2">
+          <div className="flex justify-center items-center gap-3">
+            <span className="text-sm text-muted-foreground">Audio System:</span>
+            {isReady ? (
+              <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-500 font-medium">
+                Ready
+              </span>
+            ) : (
+              <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-500 font-medium">
+                Initializing...
+              </span>
+            )}
+          </div>
+          <div className="flex justify-center gap-2 flex-wrap">
+            <Button
+              variant={instrumentType === "roblox" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("roblox")}
+            >
+              Roblox (Low Latency)
+            </Button>
+            <Button
+              variant={instrumentType === "synth" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("synth")}
+            >
+              Synth
+            </Button>
+            <Button
+              variant={instrumentType === "organ" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("organ")}
+            >
+              Church Organ
+            </Button>
+            <Button
+              variant={instrumentType === "guitar" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInstrumentType("guitar")}
+            >
+              Electric Guitar
+            </Button>
+          </div>
         </div>
 
         <DrumGrid sounds={drumSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />

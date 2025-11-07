@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { SoundType } from "@/types/audio";
 
 export type InstrumentType = "roblox" | "synth" | "organ" | "guitar";
@@ -7,12 +7,48 @@ export const useAudioEngine = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const activeNotesRef = useRef<Set<string>>(new Set());
   const [instrumentType, setInstrumentType] = useState<InstrumentType>("roblox");
+  const [isReady, setIsReady] = useState(false);
+
+  // Initialize and warm up audio context immediately
+  useEffect(() => {
+    const initAudio = () => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().then(() => {
+          setIsReady(true);
+        });
+      } else {
+        setIsReady(true);
+      }
+    };
+
+    // Initialize on mount
+    initAudio();
+
+    // Also initialize on first user interaction (for browser autoplay policies)
+    const warmUp = () => {
+      initAudio();
+      document.removeEventListener('click', warmUp);
+      document.removeEventListener('keydown', warmUp);
+    };
+
+    document.addEventListener('click', warmUp, { once: true });
+    document.addEventListener('keydown', warmUp, { once: true });
+
+    return () => {
+      document.removeEventListener('click', warmUp);
+      document.removeEventListener('keydown', warmUp);
+    };
+  }, []);
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    // Resume if suspended (browser autoplay policy)
+    // Quick resume check without await to minimize latency
     if (audioContextRef.current.state === 'suspended') {
       audioContextRef.current.resume();
     }
@@ -22,8 +58,8 @@ export const useAudioEngine = () => {
   const playSound = useCallback((type: SoundType, frequency?: number) => {
     const audioContext = getAudioContext();
     
-    // Use high-precision scheduling - start sounds slightly ahead
-    const currentTime = audioContext.currentTime + 0.005;
+    // Use immediate scheduling for lowest latency
+    const currentTime = audioContext.currentTime;
     const noteFreq = frequency || 261.63;
     const noteId = `${noteFreq}-${Date.now()}`;
 
@@ -147,7 +183,7 @@ export const useAudioEngine = () => {
       oscillator.onended = cleanup;
 
     } else {
-      // Roblox-style synthetic sound with triangle wave (default)
+      // Roblox-style synthetic sound with triangle wave (default) - optimized for low latency
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
@@ -157,22 +193,17 @@ export const useAudioEngine = () => {
       oscillator.type = "triangle";
       oscillator.frequency.setValueAtTime(noteFreq, currentTime);
       
-      // Add slight vibrato effect
-      oscillator.frequency.linearRampToValueAtTime(noteFreq * 1.02, currentTime + 0.05);
-      oscillator.frequency.linearRampToValueAtTime(noteFreq, currentTime + 0.1);
-      
-      // Roblox-style envelope - bouncy and synthetic with polyphony compensation
+      // Simplified envelope for minimal latency
       const volume = 0.5 * polyphonyFactor;
       gainNode.gain.setValueAtTime(0, currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(volume * 0.6, currentTime + 0.08);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.25);
+      gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.005); // Faster attack
+      gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.2); // Shorter decay
 
       oscillator.start(currentTime);
-      oscillator.stop(currentTime + 0.25);
+      oscillator.stop(currentTime + 0.2);
       oscillator.onended = cleanup;
     }
   }, [getAudioContext, instrumentType]);
 
-  return { playSound, instrumentType, setInstrumentType };
+  return { playSound, instrumentType, setInstrumentType, isReady };
 };
