@@ -157,6 +157,7 @@ const Index = () => {
           accuracy: accuracy.accuracy
         };
 
+        console.log(`🎹 Note recorded: ${sound.name} at beat ${beatInfo.beatNumber}.${beatInfo.subdivision}`);
         setRecordedNotes(prev => [...prev, recordedNote]);
       }
     }

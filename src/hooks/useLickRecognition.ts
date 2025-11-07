@@ -83,9 +83,11 @@ export const useLickRecognition = ({
   // Check for lick matches when new notes are recorded
   useEffect(() => {
     if (!isRecording || recordedNotes.length === 0) {
-      // Reset when recording stops
-      recognizedLickIdsRef.current.clear();
-      lastCheckIndexRef.current = 0;
+      // Don't reset during active sessions - only when truly stopping
+      if (recordedNotes.length === 0 && !isRecording) {
+        recognizedLickIdsRef.current.clear();
+        lastCheckIndexRef.current = 0;
+      }
       return;
     }
 
@@ -117,6 +119,8 @@ export const useLickRecognition = ({
           accuracy: result.accuracy,
           points
         };
+
+        console.log(`🎯 Lick recognized: ${lick.name}, Points: ${points}, Accuracy: ${result.accuracy.toFixed(1)}%`);
 
         // Update score
         setTotalScore(prev => prev + points);
