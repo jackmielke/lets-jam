@@ -73,7 +73,7 @@ const drumSounds: DrumSound[] = [
 ];
 
 const Index = () => {
-  const { playSound, instrumentType, setInstrumentType, isReady } = useAudioEngine();
+  const { playSound, instrumentType, setInstrumentType, isReady, setLatencyCallback } = useAudioEngine();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
   const [metronomeBpm, setMetronomeBpm] = useState(120);
@@ -93,6 +93,12 @@ const Index = () => {
   );
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
   const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
+  const [latencyStats, setLatencyStats] = useState({
+    keyHandler: 0,
+    audioSchedule: 0,
+    total: 0,
+    lastUpdate: Date.now()
+  });
 
   // Metronome for rhythm tracking
   const metronome = useMetronome({
@@ -105,15 +111,33 @@ const Index = () => {
     localStorage.setItem('pianomaker-licks', JSON.stringify(licks));
   }, [licks]);
 
+  // Setup latency monitoring
+  useEffect(() => {
+    setLatencyCallback((audioLatency) => {
+      setLatencyStats(prev => ({
+        ...prev,
+        audioSchedule: audioLatency,
+        total: prev.keyHandler + audioLatency,
+        lastUpdate: Date.now()
+      }));
+    });
+  }, [setLatencyCallback]);
+
   const handlePlaySound = useCallback((soundId: string) => {
     const keyPressTime = performance.now();
     const sound = drumSounds.find((s) => s.id === soundId);
     if (sound) {
       playSound(sound.type, sound.frequency);
       const handlerLatency = performance.now() - keyPressTime;
-      if (handlerLatency > 2) {
-        console.warn(`Key handler took ${handlerLatency.toFixed(2)}ms`);
-      }
+      
+      // Update latency stats
+      setLatencyStats(prev => ({
+        keyHandler: handlerLatency,
+        audioSchedule: prev.audioSchedule, // Will be updated by playSound
+        total: handlerLatency + prev.audioSchedule,
+        lastUpdate: Date.now()
+      }));
+      
       setPressedKeyId(soundId);
       setTimeout(() => setPressedKeyId(null), 200);
 
@@ -410,6 +434,32 @@ const Index = () => {
             Play using your keyboard: <span className="font-mono font-bold">ASDFGHJKL;'</span> for white keys, <span className="font-mono font-bold">WETUI O</span> for black keys
           </p>
         </header>
+
+        {/* Latency Monitor */}
+        <div className="flex justify-center mb-4">
+          <div className="inline-flex items-center gap-4 px-4 py-2 rounded-lg bg-card border border-border">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Key Handler:</span>
+              <span className={`text-xs font-mono font-bold ${latencyStats.keyHandler > 5 ? 'text-yellow-500' : 'text-green-500'}`}>
+                {latencyStats.keyHandler.toFixed(2)}ms
+              </span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Audio Schedule:</span>
+              <span className={`text-xs font-mono font-bold ${latencyStats.audioSchedule > 5 ? 'text-yellow-500' : 'text-green-500'}`}>
+                {latencyStats.audioSchedule.toFixed(2)}ms
+              </span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Total JS Latency:</span>
+              <span className={`text-xs font-mono font-bold ${latencyStats.total > 10 ? 'text-red-500' : latencyStats.total > 5 ? 'text-yellow-500' : 'text-green-500'}`}>
+                {latencyStats.total.toFixed(2)}ms
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Instrument Selector */}
         <div className="space-y-2">

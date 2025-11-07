@@ -8,6 +8,7 @@ export const useAudioEngine = () => {
   const activeNotesRef = useRef<Set<string>>(new Set());
   const [instrumentType, setInstrumentType] = useState<InstrumentType>("roblox");
   const [isReady, setIsReady] = useState(false);
+  const latencyCallbackRef = useRef<((latency: number) => void) | null>(null);
 
   // Initialize and warm up audio context immediately
   useEffect(() => {
@@ -69,8 +70,8 @@ export const useAudioEngine = () => {
     
     // Log latency (comment out in production)
     const scheduleLatency = performance.now() - startTime;
-    if (scheduleLatency > 5) {
-      console.warn(`Audio scheduling took ${scheduleLatency.toFixed(2)}ms`);
+    if (latencyCallbackRef.current) {
+      latencyCallbackRef.current(scheduleLatency);
     }
     
     // Calculate volume reduction based on active notes (prevent clipping)
@@ -212,5 +213,7 @@ export const useAudioEngine = () => {
     }
   }, [getAudioContext, instrumentType]);
 
-  return { playSound, instrumentType, setInstrumentType, isReady };
+  return { playSound, instrumentType, setInstrumentType, isReady, setLatencyCallback: (cb: (latency: number) => void) => {
+    latencyCallbackRef.current = cb;
+  } };
 };
