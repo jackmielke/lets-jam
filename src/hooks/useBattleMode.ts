@@ -33,6 +33,7 @@ export const useBattleMode = ({
   const [playerScore, setPlayerScore] = useState(0);
   const [turnPointsEarned, setTurnPointsEarned] = useState(0);
   const [npcMessage, setNpcMessage] = useState<string>("");
+  const [barScores, setBarScores] = useState<Map<number, number>>(new Map());
   const turnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pointsTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const scoreSnapshotRef = useRef(0);
@@ -137,6 +138,7 @@ export const useBattleMode = ({
       const pointsTimeoutId = setTimeout(() => {
         const pointsEarned = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
         setPlayerScore(prev => prev + pointsEarned);
+        setBarScores(prev => new Map(prev).set(barNumber, pointsEarned));
         console.log(`🎮 Player turn ${barNumber} ended: Points earned = ${pointsEarned} (total: ${recognizedPointsRef.current}, snapshot: ${scoreSnapshotRef.current})`);
         console.log(`   📊 Notes played: ${recordedNotes.length}, Licks available: ${licks.length}`);
         if (pointsEarned > 0) {
@@ -161,6 +163,7 @@ export const useBattleMode = ({
     setGameState("count-in");
     setCurrentBar(0);
     setPlayerScore(0);
+    setBarScores(new Map());
     scoreSnapshotRef.current = 0;
     onClearRecording();
     
@@ -183,6 +186,7 @@ export const useBattleMode = ({
     setCurrentBar(0);
     barIndexRef.current = 0;
     setPlayerScore(0);
+    setBarScores(new Map());
     onStopMetronome();
     clearTurnTimeout();
     onClearRecording();
@@ -202,6 +206,7 @@ export const useBattleMode = ({
     playerScore,
     turnPointsEarned,
     npcMessage,
+    barScores,
     TOTAL_BARS,
     startGame,
     stopGame,
