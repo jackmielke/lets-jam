@@ -32,6 +32,11 @@ export const useBattleMode = ({
   const [npcMessage, setNpcMessage] = useState<string>("");
   const turnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scoreSnapshotRef = useRef(0);
+  const barIndexRef = useRef(0);
+  const recognizedPointsRef = useRef(recognizedPoints);
+  useEffect(() => {
+    recognizedPointsRef.current = recognizedPoints;
+  }, [recognizedPoints]);
 
   const TOTAL_BARS = 8;
   const beatDuration = (60 / bpm) * 1000;
@@ -71,51 +76,50 @@ export const useBattleMode = ({
     toast.success(`Battle over! Final score: ${finalScore} points`);
   }, [onStopMetronome, clearTurnTimeout, playerScore, recognizedPoints]);
 
-  const startPlayerTurn = useCallback(() => {
-    // Move to next bar for player
-    const playerBar = currentBar + 1;
-    setCurrentBar(playerBar);
-    setGameState("player-turn");
-    setNpcMessage("your turn!");
-    
-    // Clear any previous recording
-    onClearRecording();
-    
-    // Take snapshot of current score at start of turn
-    scoreSnapshotRef.current = recognizedPoints;
-    
-    // End turn after one bar (4 beats)
-    turnTimeoutRef.current = setTimeout(() => {
-      // Calculate points earned this turn
-      const pointsEarned = recognizedPoints - scoreSnapshotRef.current;
-      setPlayerScore(prev => prev + pointsEarned);
-      
-      if (pointsEarned > 0) {
-        toast.success(`+${pointsEarned} points!`);
-      }
+  const runBar = useCallback(() => {
+    // End condition: after TOTAL_BARS
+    if (barIndexRef.current > TOTAL_BARS) {
+      endGame();
+      return;
+    }
 
-      // Check if game should end after player's turn
-      if (playerBar >= TOTAL_BARS) {
-        endGame();
-        return;
-      }
-      
-      // Move to next bar for NPC
-      const npcBar = playerBar + 1;
-      setCurrentBar(npcBar);
+    const barNumber = barIndexRef.current;
+    setCurrentBar(barNumber);
+
+    const isNpcTurn = barNumber % 2 === 1; // 1,3,5,7 -> NPC; 2,4,6,8 -> Player
+
+    if (isNpcTurn) {
       setGameState("npc-turn");
+      setNpcMessage("DJ KeyKid's turn!");
       playNPCTurn();
-      
-      // After NPC plays for one bar, check if game should end
+
+      // Schedule next bar
+      clearTurnTimeout();
       turnTimeoutRef.current = setTimeout(() => {
-        if (npcBar >= TOTAL_BARS) {
-          endGame();
-        } else {
-          startPlayerTurn();
-        }
+        barIndexRef.current += 1;
+        runBar();
       }, barDuration);
-    }, barDuration);
-  }, [currentBar, barDuration, onClearRecording, recognizedPoints, playNPCTurn, endGame, playerScore]);
+    } else {
+      setGameState("player-turn");
+      setNpcMessage("your turn!");
+
+      // Prepare for player's recording window
+      onClearRecording();
+      scoreSnapshotRef.current = recognizedPointsRef.current;
+
+      // End player bar after one bar, add points, then advance
+      clearTurnTimeout();
+      turnTimeoutRef.current = setTimeout(() => {
+        const pointsEarned = recognizedPointsRef.current - scoreSnapshotRef.current;
+        setPlayerScore(prev => prev + pointsEarned);
+        if (pointsEarned > 0) {
+          toast.success(`+${pointsEarned} points!`);
+        }
+        barIndexRef.current += 1;
+        runBar();
+      }, barDuration);
+    }
+  }, [TOTAL_BARS, barDuration, endGame, onClearRecording, playNPCTurn]);
 
   const startGame = useCallback(() => {
     if (licks.length === 0) {
@@ -137,21 +141,16 @@ export const useBattleMode = ({
 
     // Wait for count-in (one bar = 4 beats)
     turnTimeoutRef.current = setTimeout(() => {
-      // NPC goes first - Bar 1
-      setGameState("npc-turn");
-      setCurrentBar(1);
-      playNPCTurn();
-
-      // After NPC's bar (4 beats), player's turn for Bar 2
-      turnTimeoutRef.current = setTimeout(() => {
-        startPlayerTurn();
-      }, barDuration);
+      // Start at bar 1 after count-in
+      barIndexRef.current = 1;
+      runBar();
     }, barDuration);
-  }, [licks.length, onStartMetronome, onClearRecording, playNPCTurn, startPlayerTurn, barDuration]);
+  }, [licks.length, onStartMetronome, onClearRecording, runBar, barDuration]);
 
   const stopGame = useCallback(() => {
     setGameState("waiting");
     setCurrentBar(0);
+    barIndexRef.current = 0;
     setPlayerScore(0);
     onStopMetronome();
     clearTurnTimeout();

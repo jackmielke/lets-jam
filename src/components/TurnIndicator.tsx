@@ -65,11 +65,32 @@ export const TurnIndicator = ({ currentTurn, barNumber, totalBars, playerScore }
         )}
 
         {currentTurn !== "game-over" && currentTurn !== "waiting" && (
-          <div className="w-full bg-secondary rounded-full h-3">
-            <div 
-              className="bg-primary h-3 rounded-full transition-all duration-500"
-              style={{ width: `${(barNumber / totalBars) * 100}%` }}
-            />
+          <div className="w-full space-y-3">
+            {/* Segmented bar showing each of the 8 bars with NPC/Player alternation */}
+            <div className="grid grid-cols-8 gap-1 w-full">
+              {Array.from({ length: totalBars }).map((_, idx) => {
+                const index = idx + 1;
+                const filled = index <= barNumber;
+                const isNpc = index % 2 === 1;
+                return (
+                  <div
+                    key={index}
+                    className={
+                      `h-2 rounded ${filled ? (isNpc ? 'bg-purple-500' : 'bg-primary') : 'bg-muted'}`
+                    }
+                    title={`${isNpc ? 'NPC' : 'You'} - Bar ${index}`}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Linear progress for smooth visual feedback */}
+            <div className="w-full bg-secondary rounded-full h-3">
+              <div 
+                className="bg-primary h-3 rounded-full transition-all duration-500"
+                style={{ width: `${(barNumber / totalBars) * 100}%` }}
+              />
+            </div>
           </div>
         )}
       </div>
