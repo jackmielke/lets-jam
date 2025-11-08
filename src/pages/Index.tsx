@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DrumGrid } from "@/components/DrumGrid";
 import { Controls } from "@/components/Controls";
 import { Sequencer } from "@/components/Sequencer";
@@ -93,7 +93,7 @@ const Index = () => {
   );
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
   const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
-  const [currentBattleBar, setCurrentBattleBar] = useState<number>(0);
+  const currentBattleBarRef = useRef<number>(0);
   const [latencyStats, setLatencyStats] = useState({
     keyHandler: 0,
     audioSchedule: 0,
@@ -157,10 +157,10 @@ const Index = () => {
           subdivision: beatInfo.subdivision,
           offsetMs: accuracy.offsetMs,
           accuracy: accuracy.accuracy,
-          barNumber: currentBattleBar > 0 ? currentBattleBar : undefined
+          barNumber: currentBattleBarRef.current > 0 ? currentBattleBarRef.current : undefined
         };
 
-        console.log(`🎹 Note recorded: ${sound.name} at beat ${beatInfo.beatNumber}.${beatInfo.subdivision}`);
+        console.log(`🎹 Note recorded: ${sound.name} at beat ${beatInfo.beatNumber}.${beatInfo.subdivision}${currentBattleBarRef.current > 0 ? ` (Bar ${currentBattleBarRef.current})` : ''}`);
         setRecordedNotes(prev => [...prev, recordedNote]);
       }
     }
@@ -580,7 +580,7 @@ const Index = () => {
             onResetRecognizedLicks={resetRecognizedLicks}
             onResetScore={resetScore}
             currentBeat={metronome.currentBeat}
-            onBarChange={setCurrentBattleBar}
+            onBarChange={(bar) => { currentBattleBarRef.current = bar; }}
             isMetronomePlaying={metronome.isPlaying}
             timingTolerance={timingTolerance}
             isRecording={metronome.isPlaying}
