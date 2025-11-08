@@ -90,14 +90,22 @@ export const useBattleMode = ({
     onStopMetronome();
     clearAllTimeouts();
     
-    const finalScore = playerScore + Math.max(0, recognizedPoints - scoreSnapshotRef.current);
-    setPlayerScore(finalScore);
+    // Calculate points from the last bar using the ref (always current)
+    const lastBarPoints = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
     
-    console.log(`🏁 Battle ended: Final score = ${finalScore} (player: ${playerScore}, last turn: ${Math.max(0, recognizedPoints - scoreSnapshotRef.current)})`);
+    // Update bar scores to include the final bar
+    setBarScores(prev => new Map(prev).set(TOTAL_BARS, lastBarPoints));
+    
+    // Use functional update to avoid stale closure issues
+    setPlayerScore(prev => {
+      const finalScore = prev + lastBarPoints;
+      console.log(`🏁 Battle ended: Final score = ${finalScore} (accumulated: ${prev}, last turn: ${lastBarPoints})`);
+      toast.success(`Battle over! Final score: ${finalScore} points`);
+      return finalScore;
+    });
     
     setNpcMessage("alright battle's over!");
-    toast.success(`Battle over! Final score: ${finalScore} points`);
-  }, [onStopMetronome, clearAllTimeouts, playerScore, recognizedPoints]);
+  }, [onStopMetronome, clearAllTimeouts, TOTAL_BARS]);
 
   const runBar = useCallback(() => {
     // End condition: after TOTAL_BARS
