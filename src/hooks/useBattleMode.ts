@@ -62,9 +62,13 @@ export const useBattleMode = ({
       clearTimeout(turnTimeoutRef.current);
       turnTimeoutRef.current = null;
     }
+  }, []);
+
+  const clearAllTimeouts = useCallback(() => {
+    clearTurnTimeout();
     pointsTimeoutsRef.current.forEach(clearTimeout);
     pointsTimeoutsRef.current = [];
-  }, []);
+  }, [clearTurnTimeout]);
 
   const playNPCTurn = useCallback(() => {
     if (licks.length === 0) {
@@ -84,7 +88,7 @@ export const useBattleMode = ({
   const endGame = useCallback(() => {
     setGameState("game-over");
     onStopMetronome();
-    clearTurnTimeout();
+    clearAllTimeouts();
     
     const finalScore = playerScore + Math.max(0, recognizedPoints - scoreSnapshotRef.current);
     setPlayerScore(finalScore);
@@ -93,7 +97,7 @@ export const useBattleMode = ({
     
     setNpcMessage("alright battle's over!");
     toast.success(`Battle over! Final score: ${finalScore} points`);
-  }, [onStopMetronome, clearTurnTimeout, playerScore, recognizedPoints]);
+  }, [onStopMetronome, clearAllTimeouts, playerScore, recognizedPoints]);
 
   const runBar = useCallback(() => {
     // End condition: after TOTAL_BARS
@@ -159,7 +163,7 @@ export const useBattleMode = ({
       // Track points timeout so it can be cleared if game stops
       pointsTimeoutsRef.current.push(pointsTimeoutId);
     }
-  }, [TOTAL_BARS, barDuration, endGame, onClearRecording, onResetRecognizedLicks, playNPCTurn]);
+  }, [TOTAL_BARS, barDuration, endGame, onClearRecording, onResetRecognizedLicks, playNPCTurn, clearTurnTimeout]);
 
   const startGame = useCallback(() => {
     if (licks.length === 0) {
@@ -192,7 +196,7 @@ export const useBattleMode = ({
       barIndexRef.current = 1;
       runBar();
     }, barDuration);
-  }, [licks.length, onStartMetronome, onClearRecording, onResetScore, runBar, barDuration]);
+  }, [licks.length, onStartMetronome, onClearRecording, onResetScore, onResetBattleHistory, runBar, barDuration]);
 
   const stopGame = useCallback(() => {
     setGameState("waiting");
@@ -201,17 +205,17 @@ export const useBattleMode = ({
     setPlayerScore(0);
     setBarScores(new Map());
     onStopMetronome();
-    clearTurnTimeout();
+    clearAllTimeouts();
     onClearRecording();
     setNpcMessage("");
-  }, [onStopMetronome, clearTurnTimeout, onClearRecording]);
+  }, [onStopMetronome, clearAllTimeouts, onClearRecording]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      clearTurnTimeout();
+      clearAllTimeouts();
     };
-  }, [clearTurnTimeout]);
+  }, [clearAllTimeouts]);
 
   return {
     gameState,
