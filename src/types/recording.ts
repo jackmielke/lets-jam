@@ -6,4 +6,5 @@ export interface RecordedNote {
   subdivision: number;
   offsetMs: number;
   accuracy: 'perfect' | 'good' | 'ok' | 'poor';
+  barNumber?: number; // Optional: which bar in the battle (1-8)
 }

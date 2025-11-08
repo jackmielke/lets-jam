@@ -93,6 +93,7 @@ const Index = () => {
   );
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
   const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
+  const [currentBattleBar, setCurrentBattleBar] = useState<number>(0);
   const [latencyStats, setLatencyStats] = useState({
     keyHandler: 0,
     audioSchedule: 0,
@@ -155,7 +156,8 @@ const Index = () => {
           beatNumber: beatInfo.beatNumber,
           subdivision: beatInfo.subdivision,
           offsetMs: accuracy.offsetMs,
-          accuracy: accuracy.accuracy
+          accuracy: accuracy.accuracy,
+          barNumber: currentBattleBar > 0 ? currentBattleBar : undefined
         };
 
         console.log(`🎹 Note recorded: ${sound.name} at beat ${beatInfo.beatNumber}.${beatInfo.subdivision}`);
@@ -578,6 +580,7 @@ const Index = () => {
             onResetRecognizedLicks={resetRecognizedLicks}
             onResetScore={resetScore}
             currentBeat={metronome.currentBeat}
+            onBarChange={setCurrentBattleBar}
             isMetronomePlaying={metronome.isPlaying}
             timingTolerance={timingTolerance}
             isRecording={metronome.isPlaying}

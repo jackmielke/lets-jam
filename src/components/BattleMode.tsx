@@ -24,6 +24,7 @@ interface BattleModeProps {
   isMetronomePlaying: boolean;
   timingTolerance: number;
   isRecording: boolean;
+  onBarChange: (barNumber: number) => void;
 }
 
 export const BattleMode = ({
@@ -40,7 +41,8 @@ export const BattleMode = ({
   currentBeat,
   isMetronomePlaying,
   timingTolerance,
-  isRecording
+  isRecording,
+  onBarChange
 }: BattleModeProps) => {
 
   const {
@@ -63,7 +65,8 @@ export const BattleMode = ({
     onClearRecording,
     recognizedPoints,
     onResetRecognizedLicks,
-    onResetScore
+    onResetScore,
+    onBarChange
   });
 
   const isGameActive = gameState !== "waiting" && gameState !== "game-over";
@@ -219,6 +222,7 @@ export const BattleMode = ({
               notes={recordedNotes}
               isRecording={isRecording && gameState === "player-turn"}
               currentBeat={currentBeat}
+              gameState={gameState}
             />
             <BattleDebugPanel
               gameState={gameState}

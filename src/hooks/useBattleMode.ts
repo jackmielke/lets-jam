@@ -16,6 +16,7 @@ interface UseBattleModeProps {
   recognizedPoints: number;
   onResetRecognizedLicks: () => void;
   onResetScore: () => void;
+  onBarChange: (barNumber: number) => void;
 }
 
 export const useBattleMode = ({
@@ -28,7 +29,8 @@ export const useBattleMode = ({
   onClearRecording,
   recognizedPoints,
   onResetRecognizedLicks,
-  onResetScore
+  onResetScore,
+  onBarChange
 }: UseBattleModeProps) => {
   const [gameState, setGameState] = useState<GameState>("waiting");
   const [currentBar, setCurrentBar] = useState(0);
@@ -100,6 +102,7 @@ export const useBattleMode = ({
 
     const barNumber = barIndexRef.current;
     setCurrentBar(barNumber);
+    onBarChange(barNumber);
 
     const isNpcTurn = barNumber % 2 === 1; // 1,3,5,7 -> NPC; 2,4,6,8 -> Player
 
