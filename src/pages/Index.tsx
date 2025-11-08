@@ -96,6 +96,11 @@ const Index = () => {
   const currentBattleBarRef = useRef<number>(0);
   const barWindowStartRef = useRef<number>(0);
   const barWindowEndRef = useRef<number>(0);
+  const [recognizedLicksPerBar, setRecognizedLicksPerBar] = useState<Map<number, Array<{
+    lick: Lick;
+    accuracy: number;
+    points: number;
+  }>>>(new Map());
   const [latencyStats, setLatencyStats] = useState({
     keyHandler: 0,
     audioSchedule: 0,
@@ -309,6 +314,21 @@ const Index = () => {
         `🎯 ${result.lick.name} recognized! +${result.points} points (${Math.round(result.accuracy)}% accuracy)`,
         { duration: 3000 }
       );
+      
+      // Store recognition for Battle Performance Review
+      const bar = currentBattleBarRef.current;
+      if (bar > 0) {
+        setRecognizedLicksPerBar(prev => {
+          const newMap = new Map(prev);
+          const barLicks = newMap.get(bar) || [];
+          newMap.set(bar, [...barLicks, {
+            lick: result.lick,
+            accuracy: result.accuracy,
+            points: result.points
+          }]);
+          return newMap;
+        });
+      }
     }
   });
 
@@ -594,8 +614,12 @@ const Index = () => {
             recordedNotes={recordedNotes}
             onClearRecording={handleClearRecording}
             recognizedPoints={totalScore}
-            onResetRecognizedLicks={resetRecognizedLicks}
+            onResetRecognizedLicks={() => {
+              resetRecognizedLicks();
+              setRecognizedLicksPerBar(new Map());
+            }}
             onResetScore={resetScore}
+            recognizedLicksPerBar={recognizedLicksPerBar}
             currentBeat={metronome.currentBeat}
             onBarChange={(bar) => { 
               currentBattleBarRef.current = bar;

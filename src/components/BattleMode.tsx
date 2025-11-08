@@ -25,6 +25,11 @@ interface BattleModeProps {
   timingTolerance: number;
   isRecording: boolean;
   onBarChange: (barNumber: number) => void;
+  recognizedLicksPerBar: Map<number, Array<{
+    lick: Lick;
+    accuracy: number;
+    points: number;
+  }>>;
 }
 
 export const BattleMode = ({
@@ -42,7 +47,8 @@ export const BattleMode = ({
   isMetronomePlaying,
   timingTolerance,
   isRecording,
-  onBarChange
+  onBarChange,
+  recognizedLicksPerBar
 }: BattleModeProps) => {
 
   const {
@@ -223,6 +229,7 @@ export const BattleMode = ({
               isRecording={isRecording && gameState === "player-turn"}
               currentBeat={currentBeat}
               gameState={gameState}
+              recognizedLicksPerBar={recognizedLicksPerBar}
             />
             <BattleDebugPanel
               gameState={gameState}

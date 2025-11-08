@@ -2,12 +2,18 @@ import { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { RecordedNote } from "@/types/recording";
+import { Lick } from "@/types/lick";
 
 interface RealTimeNotesDisplayProps {
   notes: RecordedNote[];
   isRecording: boolean;
   currentBeat: number;
   gameState?: string;
+  recognizedLicksPerBar?: Map<number, Array<{
+    lick: Lick;
+    accuracy: number;
+    points: number;
+  }>>;
 }
 
 const accuracyColors = {
@@ -21,7 +27,8 @@ export const RealTimeNotesDisplay = ({
   notes,
   isRecording,
   currentBeat,
-  gameState
+  gameState,
+  recognizedLicksPerBar
 }: RealTimeNotesDisplayProps) => {
   const isGameOver = gameState === "game-over";
   const playerTurnBars = [2, 4, 6, 8];
@@ -39,6 +46,9 @@ export const RealTimeNotesDisplay = ({
   const notesPerTurn = playerTurnBars.map(bar => 
     notes.filter(note => note.barNumber === bar).length
   );
+
+  // Get recognized licks for selected turn
+  const recognizedLicks = recognizedLicksPerBar?.get(selectedBar) || [];
 
   return (
     <Card className="p-4 bg-card/50">
@@ -162,6 +172,36 @@ export const RealTimeNotesDisplay = ({
               <span className="text-muted-foreground">Poor</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lick Recognition Summary */}
+      {isGameOver && recognizedLicks.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <h4 className="text-xs font-semibold mb-2">Licks Recognized:</h4>
+          <div className="space-y-1">
+            {recognizedLicks.map((recognition, idx) => (
+              <div key={idx} className="flex items-center justify-between text-xs">
+                <span className="font-medium">{recognition.lick.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">
+                    {Math.round(recognition.accuracy)}%
+                  </span>
+                  <span className="text-green-500 font-semibold">
+                    +{recognition.points}pts
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isGameOver && recognizedLicks.length === 0 && turnNotes.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <p className="text-xs text-muted-foreground italic">
+            No licks recognized this turn - keep practicing!
+          </p>
         </div>
       )}
     </Card>
