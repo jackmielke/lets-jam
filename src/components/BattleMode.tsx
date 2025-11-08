@@ -30,6 +30,7 @@ interface BattleModeProps {
     accuracy: number;
     points: number;
   }>>;
+  onResetBattleHistory?: () => void;
 }
 
 export const BattleMode = ({
@@ -48,7 +49,8 @@ export const BattleMode = ({
   timingTolerance,
   isRecording,
   onBarChange,
-  recognizedLicksPerBar
+  recognizedLicksPerBar,
+  onResetBattleHistory
 }: BattleModeProps) => {
 
   const {
@@ -72,7 +74,8 @@ export const BattleMode = ({
     recognizedPoints,
     onResetRecognizedLicks,
     onResetScore,
-    onBarChange
+    onBarChange,
+    onResetBattleHistory
   });
 
   const isGameActive = gameState !== "waiting" && gameState !== "game-over";

@@ -614,11 +614,9 @@ const Index = () => {
             recordedNotes={recordedNotes}
             onClearRecording={handleClearRecording}
             recognizedPoints={totalScore}
-            onResetRecognizedLicks={() => {
-              resetRecognizedLicks();
-              setRecognizedLicksPerBar(new Map());
-            }}
+            onResetRecognizedLicks={resetRecognizedLicks}
             onResetScore={resetScore}
+            onResetBattleHistory={() => setRecognizedLicksPerBar(new Map())}
             recognizedLicksPerBar={recognizedLicksPerBar}
             currentBeat={metronome.currentBeat}
             onBarChange={(bar) => { 

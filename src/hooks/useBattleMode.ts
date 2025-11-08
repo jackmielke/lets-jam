@@ -17,6 +17,7 @@ interface UseBattleModeProps {
   onResetRecognizedLicks: () => void;
   onResetScore: () => void;
   onBarChange: (barNumber: number) => void;
+  onResetBattleHistory?: () => void;
 }
 
 export const useBattleMode = ({
@@ -30,7 +31,8 @@ export const useBattleMode = ({
   recognizedPoints,
   onResetRecognizedLicks,
   onResetScore,
-  onBarChange
+  onBarChange,
+  onResetBattleHistory
 }: UseBattleModeProps) => {
   const [gameState, setGameState] = useState<GameState>("waiting");
   const [currentBar, setCurrentBar] = useState(0);
@@ -167,6 +169,7 @@ export const useBattleMode = ({
 
     // Reset score to start fresh for this battle
     onResetScore();
+    onResetBattleHistory?.();
     
     setGameState("count-in");
     setCurrentBar(0);
