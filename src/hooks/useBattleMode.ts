@@ -18,6 +18,8 @@ interface UseBattleModeProps {
   onResetScore: () => void;
   onBarChange: (barNumber: number) => void;
   onResetBattleHistory?: () => void;
+  onBattleStart?: () => void;
+  onBattleEnd?: () => void;
 }
 
 export const useBattleMode = ({
@@ -32,7 +34,9 @@ export const useBattleMode = ({
   onResetRecognizedLicks,
   onResetScore,
   onBarChange,
-  onResetBattleHistory
+  onResetBattleHistory,
+  onBattleStart,
+  onBattleEnd
 }: UseBattleModeProps) => {
   const [gameState, setGameState] = useState<GameState>("waiting");
   const [currentBar, setCurrentBar] = useState(0);
@@ -88,6 +92,7 @@ export const useBattleMode = ({
   const endGame = useCallback(() => {
     setGameState("game-over");
     onStopMetronome();
+    onBattleEnd?.();
     clearAllTimeouts();
     
     // Calculate points from the last bar using the ref (always current)
@@ -105,7 +110,7 @@ export const useBattleMode = ({
     });
     
     setNpcMessage("alright battle's over!");
-  }, [onStopMetronome, clearAllTimeouts, TOTAL_BARS]);
+  }, [onStopMetronome, onBattleEnd, clearAllTimeouts, TOTAL_BARS]);
 
   const runBar = useCallback(() => {
     // End condition: after TOTAL_BARS
@@ -200,11 +205,12 @@ export const useBattleMode = ({
 
     // Wait for count-in (one bar = 4 beats)
     turnTimeoutRef.current = setTimeout(() => {
-      // Start at bar 1 after count-in
+      // Start at bar 1 after count-in - this is when the battle actually begins
       barIndexRef.current = 1;
+      onBattleStart?.();
       runBar();
     }, barDuration);
-  }, [licks.length, onStartMetronome, onClearRecording, onResetScore, onResetBattleHistory, runBar, barDuration]);
+  }, [licks.length, onStartMetronome, onClearRecording, onResetScore, onResetBattleHistory, onBattleStart, runBar, barDuration]);
 
   const stopGame = useCallback(() => {
     setGameState("waiting");

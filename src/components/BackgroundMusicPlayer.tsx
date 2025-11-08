@@ -15,15 +15,24 @@ interface MusicFile {
 
 interface BackgroundMusicPlayerProps {
   refreshTrigger: number;
+  audioRef?: React.RefObject<HTMLAudioElement>;
+  syncMode?: boolean;
+  autoPlay?: boolean;
 }
 
-export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerProps) => {
+export const BackgroundMusicPlayer = ({ 
+  refreshTrigger, 
+  audioRef: externalAudioRef,
+  syncMode = false,
+  autoPlay = false
+}: BackgroundMusicPlayerProps) => {
   const [musicFiles, setMusicFiles] = useState<MusicFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [playbackRate, setPlaybackRate] = useState([100]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const internalAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = externalAudioRef || internalAudioRef;
 
   const loadMusicFiles = async () => {
     try {
@@ -73,6 +82,12 @@ export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerP
   const handlePlay = () => {
     if (!selectedFile) {
       toast.error("Please select a music file first");
+      return;
+    }
+
+    // In sync mode, don't allow manual play/pause
+    if (syncMode) {
+      toast.info("Music is controlled by battle sync");
       return;
     }
 
@@ -143,19 +158,20 @@ export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerP
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePlay}
-              disabled={!selectedFile}
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-            </Button>
+          {!syncMode && (
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePlay}
+                disabled={!selectedFile}
+              >
+                {isPlaying ? (
+                  <Pause className="w-4 h-4" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+              </Button>
 
             <div className="flex items-center gap-2 flex-1">
               <Volume2 className="w-4 h-4 text-muted-foreground" />
@@ -169,7 +185,15 @@ export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerP
               <span className="text-xs text-muted-foreground w-8">{volume[0]}%</span>
             </div>
           </div>
+          )}
 
+          {syncMode && (
+            <p className="text-sm text-muted-foreground text-center">
+              🎵 Music synced to battle tempo
+            </p>
+          )}
+
+          {!syncMode && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground whitespace-nowrap">Speed:</span>
             <Slider
@@ -182,6 +206,7 @@ export const BackgroundMusicPlayer = ({ refreshTrigger }: BackgroundMusicPlayerP
             />
             <span className="text-xs text-muted-foreground w-12">{playbackRate[0]}%</span>
           </div>
+          )}
         </div>
 
         {selectedFileObj && (

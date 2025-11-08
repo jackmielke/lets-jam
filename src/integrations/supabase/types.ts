@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      background_music_metadata: {
+        Row: {
+          created_at: string
+          cue_point_seconds: number
+          duration_seconds: number | null
+          file_name: string
+          id: string
+          musical_key: string | null
+          original_bpm: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cue_point_seconds?: number
+          duration_seconds?: number | null
+          file_name: string
+          id?: string
+          musical_key?: string | null
+          original_bpm: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cue_point_seconds?: number
+          duration_seconds?: number | null
+          file_name?: string
+          id?: string
+          musical_key?: string | null
+          original_bpm?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       licks: {
         Row: {
           bpm: number

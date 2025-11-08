@@ -10,6 +10,8 @@ import { LickSequencer } from "@/components/LickSequencer";
 import { ScoreDisplay } from "@/components/ScoreDisplay";
 import { BackgroundMusicUpload } from "@/components/BackgroundMusicUpload";
 import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer";
+import { MusicMetadataEditor } from "@/components/MusicMetadataEditor";
+import { BattleMusicSelector } from "@/components/BattleMusicSelector";
 import { SampleRecorder } from "@/components/SampleRecorder";
 import { SampleLibrary } from "@/components/SampleLibrary";
 import { BattleMode } from "@/components/BattleMode";
@@ -18,6 +20,7 @@ import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useMetronome } from "@/hooks/useMetronome";
 import { useLickPlayback } from "@/hooks/useLickPlayback";
 import { useLickRecognition } from "@/hooks/useLickRecognition";
+import { useMusicSync } from "@/hooks/useMusicSync";
 import { DrumSound } from "@/types/audio";
 import { RecordedNote } from "@/types/recording";
 import { Lick } from "@/types/lick";
@@ -27,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Save, Trash } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
+import { supabase } from "@/integrations/supabase/client";
 
 const drumSounds: DrumSound[] = [
   // Octava 3
@@ -93,6 +97,9 @@ const Index = () => {
   );
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
   const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
+  const [selectedMusicFile, setSelectedMusicFile] = useState<{name: string; path: string; url: string} | null>(null);
+  const [musicFiles, setMusicFiles] = useState<{name: string; path: string; url: string}[]>([]);
+  const battleAudioRef = useRef<HTMLAudioElement>(null);
   const currentBattleBarRef = useRef<number>(0);
   const barWindowStartRef = useRef<number>(0);
   const barWindowEndRef = useRef<number>(0);
@@ -108,12 +115,57 @@ const Index = () => {
     lastUpdate: Date.now()
   });
   const [timingTolerance, setTimingTolerance] = useState(150); // ms tolerance for lick recognition
+  const [battleMusicMetadata, setBattleMusicMetadata] = useState<{
+    id: string;
+    file_name: string;
+    title: string;
+    original_bpm: number;
+    musical_key: string | null;
+    cue_point_seconds: number;
+    duration_seconds: number | null;
+  } | null>(null);
+  const [battleMusicUrl, setBattleMusicUrl] = useState<string | null>(null);
 
   // Metronome for rhythm tracking
   const metronome = useMetronome({
     bpm: metronomeBpm,
     beatsPerBar: 4
   });
+
+  // Music sync for battle mode
+  const musicSync = useMusicSync({
+    battleBPM: metronomeBpm,
+    metadata: battleMusicMetadata,
+    audioElement: battleAudioRef.current,
+    enabled: !!battleMusicMetadata
+  });
+
+  // Load music files
+  useEffect(() => {
+    const loadMusic = async () => {
+      const { data, error } = await supabase.storage.from("background-music").list();
+      if (error) {
+        console.error('Error loading music:', error);
+        return;
+      }
+      if (data) {
+        const files = await Promise.all(
+          data.map(async (file) => {
+            const { data: urlData } = supabase.storage
+              .from("background-music")
+              .getPublicUrl(file.name);
+            return {
+              name: file.name,
+              path: file.name,
+              url: urlData.publicUrl
+            };
+          })
+        );
+        setMusicFiles(files);
+      }
+    };
+    loadMusic();
+  }, [musicRefreshTrigger]);
 
   // Persist licks to localStorage whenever they change
   useEffect(() => {
@@ -605,6 +657,17 @@ const Index = () => {
 
         {/* Battle Mode */}
         <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <BattleMusicSelector
+              battleBPM={metronomeBpm}
+              onSelectMusic={(metadata, url) => {
+                setBattleMusicMetadata(metadata);
+                setBattleMusicUrl(url);
+              }}
+              selectedFileName={battleMusicMetadata?.file_name || null}
+            />
+          </div>
+          
           <BattleMode
             licks={licks}
             onPlayLick={playLick}
@@ -628,7 +691,24 @@ const Index = () => {
             isMetronomePlaying={metronome.isPlaying}
             timingTolerance={timingTolerance}
             isRecording={metronome.isPlaying}
+            onBattleStart={() => {
+              if (battleMusicMetadata && battleMusicUrl) {
+                musicSync.startSyncedPlayback();
+              }
+            }}
+            onBattleEnd={() => {
+              musicSync.stopSyncedPlayback();
+            }}
           />
+
+          {/* Hidden audio element for synced music */}
+          {battleMusicUrl && (
+            <audio
+              ref={battleAudioRef}
+              src={battleMusicUrl}
+              preload="auto"
+            />
+          )}
         </div>
 
         {/* Lick Library */}
@@ -661,12 +741,45 @@ const Index = () => {
         {/* Background Music */}
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-center">Background Music</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <BackgroundMusicUpload 
               onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)}
             />
             <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
+            {selectedMusicFile && (
+              <MusicMetadataEditor
+                musicFile={selectedMusicFile}
+                onSaved={() => {
+                  toast.success("Metadata saved!");
+                  setMusicRefreshTrigger(prev => prev + 1);
+                }}
+              />
+            )}
           </div>
+          {musicFiles.length > 0 && !selectedMusicFile && (
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (musicFiles.length > 0) {
+                    setSelectedMusicFile(musicFiles[0]);
+                  }
+                }}
+              >
+                Set Metadata for Tracks
+              </Button>
+            </div>
+          )}
+          {selectedMusicFile && (
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedMusicFile(null)}
+              >
+                Done Editing Metadata
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Audio Samples */}

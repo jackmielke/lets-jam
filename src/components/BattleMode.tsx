@@ -31,6 +31,8 @@ interface BattleModeProps {
     points: number;
   }>>;
   onResetBattleHistory?: () => void;
+  onBattleStart?: () => void;
+  onBattleEnd?: () => void;
 }
 
 export const BattleMode = ({
@@ -50,7 +52,9 @@ export const BattleMode = ({
   isRecording,
   onBarChange,
   recognizedLicksPerBar,
-  onResetBattleHistory
+  onResetBattleHistory,
+  onBattleStart,
+  onBattleEnd
 }: BattleModeProps) => {
 
   const {
@@ -75,7 +79,9 @@ export const BattleMode = ({
     onResetRecognizedLicks,
     onResetScore,
     onBarChange,
-    onResetBattleHistory
+    onResetBattleHistory,
+    onBattleStart,
+    onBattleEnd
   });
 
   const isGameActive = gameState !== "waiting" && gameState !== "game-over";
