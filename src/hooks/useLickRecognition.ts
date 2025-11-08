@@ -35,6 +35,57 @@ export const useLickRecognition = ({
   const recognizedLickIdsRef = useRef<Set<string>>(new Set());
   const lastCheckIndexRef = useRef(0);
 
+  // Helper to generate multiple interpretations of a note's timing
+  const getSubdivisionInterpretations = useCallback((note: RecordedNote): Array<{beatNumber: number; subdivision: number}> => {
+    const interpretations = [];
+    
+    // 1. Raw interpretation (as-is)
+    interpretations.push({
+      beatNumber: note.beatNumber,
+      subdivision: note.subdivision
+    });
+    
+    // 2. Floor to previous 16th note
+    const sixteenths = [0, 0.25, 0.5, 0.75];
+    let floorSubdivision = 0;
+    for (const s of sixteenths) {
+      if (s <= note.subdivision) {
+        floorSubdivision = s;
+      }
+    }
+    if (floorSubdivision !== note.subdivision) {
+      interpretations.push({
+        beatNumber: note.beatNumber,
+        subdivision: floorSubdivision
+      });
+    }
+    
+    // 3. Ceiling to next 16th note (including next beat)
+    let ceilSubdivision = 1.0; // Default to next beat
+    for (const s of sixteenths) {
+      if (s > note.subdivision) {
+        ceilSubdivision = s;
+        break;
+      }
+    }
+    
+    // If ceiling is 1.0, wrap to next beat at subdivision 0
+    if (ceilSubdivision === 1.0) {
+      const nextBeat = note.beatNumber === 4 ? 1 : note.beatNumber + 1;
+      interpretations.push({
+        beatNumber: nextBeat,
+        subdivision: 0
+      });
+    } else if (ceilSubdivision !== note.subdivision) {
+      interpretations.push({
+        beatNumber: note.beatNumber,
+        subdivision: ceilSubdivision
+      });
+    }
+    
+    return interpretations;
+  }, []);
+
   // Check if a sequence of notes matches a lick pattern
   const matchesLick = useCallback((notes: RecordedNote[], lick: Lick): { 
     matches: boolean; 
@@ -70,10 +121,26 @@ export const useLickRecognition = ({
     const firstLickNote = lick.notes[0];
     
     const firstExpectedTime = (firstLickNote.beatNumber - 1 + firstLickNote.subdivision) * beatDuration;
-    const firstPlayedTime = (firstPlayedNote.beatNumber - 1 + firstPlayedNote.subdivision) * beatDuration;
-    const firstNoteOffset = firstPlayedTime - firstExpectedTime;
     
-    console.log(`    🎯 First note timing: offset = ${firstNoteOffset.toFixed(1)}ms`);
+    // Try all interpretations of the first note
+    const firstNoteInterpretations = getSubdivisionInterpretations(firstPlayedNote);
+    let bestFirstNoteOffset = Infinity;
+    let bestFirstInterpretation = firstNoteInterpretations[0];
+
+    for (const interp of firstNoteInterpretations) {
+      const interpTime = (interp.beatNumber - 1 + interp.subdivision) * beatDuration;
+      const offset = interpTime - firstExpectedTime;
+      
+      if (Math.abs(offset) < Math.abs(bestFirstNoteOffset)) {
+        bestFirstNoteOffset = offset;
+        bestFirstInterpretation = interp;
+      }
+    }
+
+    const firstNoteOffset = bestFirstNoteOffset;
+    const firstPlayedTime = (bestFirstInterpretation.beatNumber - 1 + bestFirstInterpretation.subdivision) * beatDuration;
+
+    console.log(`    🎯 First note timing: offset = ${firstNoteOffset.toFixed(1)}ms (using B${bestFirstInterpretation.beatNumber}.${bestFirstInterpretation.subdivision})`);
 
     // If first note is too far off, reject (wrong beat)
     if (Math.abs(firstNoteOffset) > timingTolerance) {
@@ -104,24 +171,36 @@ export const useLickRecognition = ({
       const playedNote = recentNotes[i];
       const lickNote = lick.notes[i];
 
-      // Calculate expected and played intervals from the first note
+      // Calculate expected interval from first note
       const expectedTime = (lickNote.beatNumber - 1 + lickNote.subdivision) * beatDuration;
-      const playedTime = (playedNote.beatNumber - 1 + playedNote.subdivision) * beatDuration;
-      
       const expectedInterval = expectedTime - firstExpectedTime;
-      const playedInterval = playedTime - firstPlayedTime;
-      const intervalDiff = Math.abs(expectedInterval - playedInterval);
+      
+      // Try all interpretations of this note and pick the best match
+      const interpretations = getSubdivisionInterpretations(playedNote);
+      let bestIntervalDiff = Infinity;
+      let bestInterpretation = interpretations[0];
+      
+      for (const interp of interpretations) {
+        const interpTime = (interp.beatNumber - 1 + interp.subdivision) * beatDuration;
+        const interpInterval = interpTime - firstPlayedTime;
+        const intervalDiff = Math.abs(expectedInterval - interpInterval);
+        
+        if (intervalDiff < bestIntervalDiff) {
+          bestIntervalDiff = intervalDiff;
+          bestInterpretation = interp;
+        }
+      }
+      
+      console.log(`    🎹 Note ${i} (${playedNote.noteName}): best interval diff = ${bestIntervalDiff.toFixed(1)}ms (using B${bestInterpretation.beatNumber}.${bestInterpretation.subdivision})`);
 
-      console.log(`    🎹 Note ${i} (${playedNote.noteName}): interval diff = ${intervalDiff.toFixed(1)}ms`);
-
-      // If interval is too far off, not a match (bad rhythm)
-      if (intervalDiff > timingTolerance) {
-        console.log(`    ❌ Interval too far off (${intervalDiff.toFixed(1)}ms > ${timingTolerance}ms) - bad rhythm!`);
+      // If best interpretation is still too far off, not a match
+      if (bestIntervalDiff > timingTolerance) {
+        console.log(`    ❌ Interval too far off (${bestIntervalDiff.toFixed(1)}ms > ${timingTolerance}ms) - bad rhythm!`);
         return { matches: false, accuracy: 0 };
       }
 
-      // Calculate accuracy for this interval (0-100)
-      const noteAccuracy = Math.max(0, 100 - (intervalDiff / timingTolerance) * 100);
+      // Calculate accuracy for this interval
+      const noteAccuracy = Math.max(0, 100 - (bestIntervalDiff / timingTolerance) * 100);
       totalAccuracy += noteAccuracy;
     }
 
