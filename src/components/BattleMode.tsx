@@ -101,65 +101,65 @@ export const BattleMode = ({
             turnPointsEarned={turnPointsEarned}
           />
           
-          {/* Battle Metronome with Per-Bar Scores */}
+          {/* Battle Metronome Beat Display */}
           {isGameActive && isMetronomePlaying && (
-            <div className="space-y-4">
-              <div className="flex justify-center items-center gap-3 py-4 px-6 bg-card/50 rounded-lg border border-border">
-                <span className="text-sm font-medium text-muted-foreground">Beat:</span>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4].map((beat) => (
-                    <div
-                      key={beat}
-                      className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all duration-100 ${
-                        currentBeat === beat
-                          ? 'bg-primary border-primary text-primary-foreground scale-110 shadow-lg'
-                          : 'border-border text-muted-foreground bg-background'
-                      }`}
-                    >
-                      {beat}
-                    </div>
-                  ))}
-                </div>
-                <span className="text-sm font-medium text-muted-foreground ml-2">{bpm} BPM</span>
+            <div className="flex justify-center items-center gap-3 py-4 px-6 bg-card/50 rounded-lg border border-border">
+              <span className="text-sm font-medium text-muted-foreground">Beat:</span>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map((beat) => (
+                  <div
+                    key={beat}
+                    className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all duration-100 ${
+                      currentBeat === beat
+                        ? 'bg-primary border-primary text-primary-foreground scale-110 shadow-lg'
+                        : 'border-border text-muted-foreground bg-background'
+                    }`}
+                  >
+                    {beat}
+                  </div>
+                ))}
               </div>
-              
-              {/* Per-Bar Score Display */}
-              <div className="flex justify-center items-center gap-2 flex-wrap px-4">
-                {[2, 4, 6, 8].map((barNum) => {
-                  const score = barScores.get(barNum);
-                  const isCurrent = currentBar === barNum && gameState === "player-turn";
-                  const isPast = currentBar > barNum;
-                  
-                  return (
-                    <div
-                      key={barNum}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all duration-300 ${
-                        isCurrent
-                          ? 'border-primary bg-primary/10 scale-110'
-                          : isPast
-                          ? 'border-border bg-card'
-                          : 'border-border/50 bg-background/50 opacity-50'
-                      }`}
-                    >
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Bar {barNum}
-                      </span>
-                      <div className={`text-2xl font-bold ${
-                        score !== undefined && score > 0
-                          ? 'text-primary'
-                          : score === 0
-                          ? 'text-muted-foreground'
-                          : 'text-muted-foreground/50'
-                      }`}>
-                        {score !== undefined ? score : '—'}
-                      </div>
-                      {score !== undefined && score > 0 && (
-                        <span className="text-xs text-primary">pts</span>
-                      )}
+              <span className="text-sm font-medium text-muted-foreground ml-2">{bpm} BPM</span>
+            </div>
+          )}
+          
+          {/* Per-Bar Score Display - Stays visible after game ends */}
+          {gameState !== "count-in" && (
+            <div className="flex justify-center items-center gap-2 flex-wrap px-4">
+              {[2, 4, 6, 8].map((barNum) => {
+                const score = barScores.get(barNum);
+                const isCurrent = currentBar === barNum && gameState === "player-turn";
+                const isPast = currentBar > barNum || gameState === "game-over";
+                
+                return (
+                  <div
+                    key={barNum}
+                    className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all duration-300 ${
+                      isCurrent
+                        ? 'border-primary bg-primary/10 scale-110'
+                        : isPast
+                        ? 'border-border bg-card'
+                        : 'border-border/50 bg-background/50 opacity-50'
+                    }`}
+                  >
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Bar {barNum}
+                    </span>
+                    <div className={`text-2xl font-bold ${
+                      score !== undefined && score > 0
+                        ? 'text-primary'
+                        : score === 0
+                        ? 'text-muted-foreground'
+                        : 'text-muted-foreground/50'
+                    }`}>
+                      {score !== undefined ? score : '—'}
                     </div>
-                  );
-                })}
-              </div>
+                    {score !== undefined && score > 0 && (
+                      <span className="text-xs text-primary">pts</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </>
