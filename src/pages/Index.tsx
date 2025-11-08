@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { DrumGrid } from "@/components/DrumGrid";
 import { Controls } from "@/components/Controls";
 import { Sequencer } from "@/components/Sequencer";
@@ -29,10 +28,9 @@ import { quantizeRecording } from "@/utils/quantize";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save, Trash, LogOut } from "lucide-react";
+import { Save, Trash } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
 const drumSounds: DrumSound[] = [
 // Octava 3
 {
@@ -257,10 +255,6 @@ const drumSounds: DrumSound[] = [
   color: "bg-white"
 }];
 const Index = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [loadingAuth, setLoadingAuth] = useState(true);
-  
   const {
     playSound,
     instrumentType,
@@ -274,7 +268,11 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
-  const [licks, setLicks] = useState<Lick[]>([]);
+  const [licks, setLicks] = useState<Lick[]>(() => {
+    // Load saved licks from localStorage on initial mount
+    const saved = localStorage.getItem('pianomaker-licks');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [lickName, setLickName] = useState("");
   const [editingLickId, setEditingLickId] = useState<string | null>(null);
   const [isPlayingSequence, setIsPlayingSequence] = useState(false);
@@ -332,101 +330,6 @@ const Index = () => {
     enabled: !!battleMusicMetadata
   });
 
-  // Authentication check
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoadingAuth(false);
-      if (!session?.user) {
-        navigate("/auth");
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  // Migrate localStorage licks to database (one-time on login)
-  useEffect(() => {
-    if (!user) return;
-
-    const migrateLicks = async () => {
-      const localLicks = localStorage.getItem('pianomaker-licks');
-      if (localLicks) {
-        try {
-          const parsed: Lick[] = JSON.parse(localLicks);
-          if (parsed.length > 0) {
-            // Check if user already has licks in database
-            const { data: existingLicks } = await supabase
-              .from('licks')
-              .select('id')
-              .eq('user_id', user.id)
-              .limit(1);
-
-            // Only migrate if no licks exist in database
-            if (!existingLicks || existingLicks.length === 0) {
-            for (const lick of parsed) {
-              await supabase.from('licks').insert({
-                user_id: user.id,
-                name: lick.name,
-                notes: lick.notes as any,
-                bpm: lick.bpm,
-                difficulty: lick.difficulty ?? null
-              });
-            }
-              toast.success(`Migrated ${parsed.length} licks to cloud!`);
-            }
-          }
-          // Clear localStorage after successful migration
-          localStorage.removeItem('pianomaker-licks');
-        } catch (error) {
-          console.error('Migration error:', error);
-        }
-      }
-    };
-
-    migrateLicks();
-  }, [user]);
-
-  // Load licks from database
-  useEffect(() => {
-    if (!user) return;
-
-    const loadLicks = async () => {
-      const { data, error } = await supabase
-        .from('licks')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading licks:', error);
-        toast.error('Failed to load licks');
-        return;
-      }
-
-      if (data) {
-        const loadedLicks: Lick[] = data.map(row => ({
-          id: row.id,
-          name: row.name,
-          notes: row.notes as any,
-          bpm: row.bpm,
-          difficulty: row.difficulty ?? undefined,
-          createdAt: new Date(row.created_at).getTime()
-        }));
-        setLicks(loadedLicks);
-      }
-    };
-
-    loadLicks();
-  }, [user]);
-
   // Load music files
   useEffect(() => {
     const loadMusic = async () => {
@@ -454,6 +357,11 @@ const Index = () => {
     };
     loadMusic();
   }, [musicRefreshTrigger]);
+
+  // Persist licks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('pianomaker-licks', JSON.stringify(licks));
+  }, [licks]);
 
   // Setup latency monitoring
   useEffect(() => {
@@ -525,11 +433,7 @@ const Index = () => {
     setLickName("");
     toast.success("Recording cleared!");
   }, []);
-  const handleSaveLick = useCallback(async () => {
-    if (!user) {
-      toast.error("Must be logged in to save licks");
-      return;
-    }
+  const handleSaveLick = useCallback(() => {
     if (recordedNotes.length === 0) {
       toast.error("No notes recorded!");
       return;
@@ -539,69 +443,35 @@ const Index = () => {
       return;
     }
     const quantizedNotes = quantizeRecording(recordedNotes);
-    
-    try {
-      if (editingLickId) {
-        // Update existing lick
-        const { error } = await supabase
-          .from('licks')
-          .update({
-            name: lickName.trim(),
-            notes: quantizedNotes as any,
-            bpm: metronomeBpm
-          })
-          .eq('id', editingLickId)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        setLicks(prev => prev.map(lick => lick.id === editingLickId ? {
-          ...lick,
-          name: lickName.trim(),
-          notes: quantizedNotes,
-          bpm: metronomeBpm
-        } : lick));
-        toast.success(`Lick "${lickName}" updated!`);
-      } else {
-        // Create new lick
-        if (licks.length >= 5) {
-          toast.error("Maximum 5 licks reached!");
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('licks')
-          .insert({
-            user_id: user.id,
-            name: lickName.trim(),
-            notes: quantizedNotes as any,
-            bpm: metronomeBpm
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        const newLick: Lick = {
-          id: data.id,
-          name: data.name,
-          notes: data.notes as any,
-          bpm: data.bpm,
-          difficulty: data.difficulty ?? undefined,
-          createdAt: new Date(data.created_at).getTime()
-        };
-        setLicks(prev => [...prev, newLick]);
-        toast.success(`Lick "${newLick.name}" saved!`);
+    if (editingLickId) {
+      // Update existing lick
+      setLicks(prev => prev.map(lick => lick.id === editingLickId ? {
+        ...lick,
+        name: lickName.trim(),
+        notes: quantizedNotes,
+        bpm: metronomeBpm
+      } : lick));
+      toast.success(`Lick "${lickName}" updated!`);
+    } else {
+      // Create new lick
+      if (licks.length >= 5) {
+        toast.error("Maximum 5 licks reached!");
+        return;
       }
-      
-      setRecordedNotes([]);
-      setLickName("");
-      setEditingLickId(null);
-    } catch (error) {
-      console.error('Error saving lick:', error);
-      toast.error('Failed to save lick');
+      const newLick: Lick = {
+        id: Date.now().toString(),
+        name: lickName.trim(),
+        notes: quantizedNotes,
+        bpm: metronomeBpm,
+        createdAt: Date.now()
+      };
+      setLicks(prev => [...prev, newLick]);
+      toast.success(`Lick "${newLick.name}" saved!`);
     }
-  }, [recordedNotes, lickName, licks.length, metronomeBpm, editingLickId, user]);
+    setRecordedNotes([]);
+    setLickName("");
+    setEditingLickId(null);
+  }, [recordedNotes, lickName, licks.length, metronomeBpm, editingLickId]);
   const handleUpdateNote = useCallback((noteIndex: number, beatNumber: number, subdivision: number) => {
     setRecordedNotes(prev => {
       const newNotes = [...prev];
@@ -630,51 +500,21 @@ const Index = () => {
     setEditingLickId(lick.id);
     toast.info(`Editing: ${lick.name}`);
   }, []);
-  const handleDeleteLick = useCallback(async (lickId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('licks')
-        .delete()
-        .eq('id', lickId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setLicks(prev => prev.filter(l => l.id !== lickId));
-      if (editingLickId === lickId) {
-        setEditingLickId(null);
-        setRecordedNotes([]);
-        setLickName("");
-      }
-      toast.success("Lick deleted!");
-    } catch (error) {
-      console.error('Error deleting lick:', error);
-      toast.error('Failed to delete lick');
+  const handleDeleteLick = useCallback((lickId: string) => {
+    setLicks(prev => prev.filter(l => l.id !== lickId));
+    if (editingLickId === lickId) {
+      setEditingLickId(null);
+      setRecordedNotes([]);
+      setLickName("");
     }
-  }, [editingLickId, user]);
-  const handleUpdateDifficulty = useCallback(async (lickId: string, difficulty: number) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('licks')
-        .update({ difficulty: difficulty || null })
-        .eq('id', lickId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setLicks(prev => prev.map(lick => lick.id === lickId ? {
-        ...lick,
-        difficulty: difficulty || undefined
-      } : lick));
-    } catch (error) {
-      console.error('Error updating difficulty:', error);
-      toast.error('Failed to update difficulty');
-    }
-  }, [user]);
+    toast.success("Lick deleted!");
+  }, [editingLickId]);
+  const handleUpdateDifficulty = useCallback((lickId: string, difficulty: number) => {
+    setLicks(prev => prev.map(lick => lick.id === lickId ? {
+      ...lick,
+      difficulty: difficulty || undefined
+    } : lick));
+  }, []);
 
   // Lick playback
   const {
@@ -833,22 +673,6 @@ const Index = () => {
       toast.info("Paused");
     }
   }, [isPlaying]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
-  if (loadingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="text-2xl font-semibold">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   return <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 relative overflow-hidden">
       {/* Subtle background photo */}
       <div className="fixed inset-0 z-0 opacity-[0.03] bg-cover bg-center bg-no-repeat" style={{
@@ -858,18 +682,7 @@ const Index = () => {
       
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         <header className="text-center space-y-4 animate-slide-up">
-          <div className="flex justify-between items-start">
-            <div className="flex-1" />
-            <div className="flex-1">
-              <h1 className="text-5xl sm:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent">Vibe Jam</h1>
-            </div>
-            <div className="flex-1 flex justify-end">
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
+          <h1 className="text-5xl sm:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent">Vibe Jam</h1>
           <p className="text-muted-foreground text-lg">
             Play using your keyboard: <span className="font-mono font-bold">ASDFGHJKL;'</span> for white keys, <span className="font-mono font-bold">WETUI O</span> for black keys
           </p>
