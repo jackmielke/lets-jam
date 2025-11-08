@@ -94,6 +94,8 @@ const Index = () => {
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
   const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
   const currentBattleBarRef = useRef<number>(0);
+  const barWindowStartRef = useRef<number>(0);
+  const barWindowEndRef = useRef<number>(0);
   const [latencyStats, setLatencyStats] = useState({
     keyHandler: 0,
     audioSchedule: 0,
@@ -149,6 +151,15 @@ const Index = () => {
         const beatInfo = metronome.getBeatAtTimestamp(timestamp);
         const accuracy = metronome.getTimingAccuracy(timestamp);
 
+        // Robustly assign bar number using time windows
+        let assignedBar = currentBattleBarRef.current;
+        const now = performance.now();
+        
+        // Handle boundary case: if note is played right after bar ends, assign to next bar
+        if (now > barWindowEndRef.current && assignedBar > 0 && assignedBar < 8) {
+          assignedBar = assignedBar + 1;
+        }
+
         const recordedNote: RecordedNote = {
           soundId: sound.id,
           noteName: sound.name,
@@ -157,10 +168,10 @@ const Index = () => {
           subdivision: beatInfo.subdivision,
           offsetMs: accuracy.offsetMs,
           accuracy: accuracy.accuracy,
-          barNumber: currentBattleBarRef.current > 0 ? currentBattleBarRef.current : undefined
+          barNumber: assignedBar > 0 ? assignedBar : undefined
         };
 
-        console.log(`🎹 Note recorded: ${sound.name} at beat ${beatInfo.beatNumber}.${beatInfo.subdivision}${currentBattleBarRef.current > 0 ? ` (Bar ${currentBattleBarRef.current})` : ''}`);
+        console.log(`🎹 Note recorded: ${sound.name} at beat ${beatInfo.beatNumber}.${beatInfo.subdivision}${assignedBar > 0 ? ` (Bar ${assignedBar})` : ''}`);
         setRecordedNotes(prev => [...prev, recordedNote]);
       }
     }
@@ -280,10 +291,16 @@ const Index = () => {
     bpm: metronomeBpm
   });
 
-  // Lick recognition
+  // Lick recognition - scope to current player turn only
+  const currentBar = currentBattleBarRef.current;
+  const playerBars = [2, 4, 6, 8];
+  const notesForRecognition = playerBars.includes(currentBar)
+    ? recordedNotes.filter(n => n.barNumber === currentBar)
+    : [];
+
   const { totalScore, recentRecognition, resetScore, resetRecognizedLicks } = useLickRecognition({
     licks,
-    recordedNotes,
+    recordedNotes: notesForRecognition,
     isRecording: metronome.isPlaying,
     beatDuration: metronome.beatDuration,
     timingTolerance,
@@ -580,7 +597,12 @@ const Index = () => {
             onResetRecognizedLicks={resetRecognizedLicks}
             onResetScore={resetScore}
             currentBeat={metronome.currentBeat}
-            onBarChange={(bar) => { currentBattleBarRef.current = bar; }}
+            onBarChange={(bar) => { 
+              currentBattleBarRef.current = bar;
+              const now = performance.now();
+              barWindowStartRef.current = now;
+              barWindowEndRef.current = now + metronome.beatDuration * 4;
+            }}
             isMetronomePlaying={metronome.isPlaying}
             timingTolerance={timingTolerance}
             isRecording={metronome.isPlaying}

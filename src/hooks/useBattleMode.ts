@@ -110,9 +110,7 @@ export const useBattleMode = ({
       setGameState("npc-turn");
       setNpcMessage("DJ KeyKid's turn!");
       
-      // Clear recordings at start of NPC turn to prepare for next player turn
-      // This preserves any anticipatory notes played late in the previous NPC turn
-      onClearRecording();
+      // Don't clear recordings - preserve full battle history for review
       
       playNPCTurn();
 
