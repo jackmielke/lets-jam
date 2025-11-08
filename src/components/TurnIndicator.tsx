@@ -6,9 +6,10 @@ interface TurnIndicatorProps {
   barNumber: number;
   totalBars: number;
   playerScore: number;
+  turnPointsEarned: number;
 }
 
-export const TurnIndicator = ({ currentTurn, barNumber, totalBars, playerScore }: TurnIndicatorProps) => {
+export const TurnIndicator = ({ currentTurn, barNumber, totalBars, playerScore, turnPointsEarned }: TurnIndicatorProps) => {
   const getStatusMessage = () => {
     switch (currentTurn) {
       case "count-in":
@@ -59,7 +60,14 @@ export const TurnIndicator = ({ currentTurn, barNumber, totalBars, playerScore }
             
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Your Score</p>
-              <p className="text-3xl font-bold text-primary">{playerScore}</p>
+              <div className="flex items-baseline gap-2 justify-center">
+                <p className="text-3xl font-bold text-primary">{playerScore}</p>
+                {turnPointsEarned > 0 && (
+                  <p className="text-2xl font-bold text-yellow-500 animate-pulse">
+                    +{turnPointsEarned}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -98,6 +98,7 @@ export const BattleMode = ({
             barNumber={currentBar}
             totalBars={TOTAL_BARS}
             playerScore={playerScore}
+            turnPointsEarned={turnPointsEarned}
           />
           
           {/* Battle Metronome with Per-Bar Scores */}
