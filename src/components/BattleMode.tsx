@@ -205,24 +205,32 @@ export const BattleMode = ({
         </p>
       )}
 
-      {/* Debug Panels */}
-      {isGameActive && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <RealTimeNotesDisplay
-            notes={recordedNotes}
-            isRecording={isRecording && gameState === "player-turn"}
-            currentBeat={currentBeat}
-          />
-          <BattleDebugPanel
-            gameState={gameState}
-            currentBar={currentBar}
-            recordedNotes={recordedNotes}
-            licks={licks}
-            timingTolerance={timingTolerance}
-            turnPointsEarned={turnPointsEarned}
-            totalScore={playerScore}
-            isRecording={isRecording && gameState === "player-turn"}
-          />
+      {/* Debug Panels / Performance Review */}
+      {(isGameActive || gameState === "game-over") && (
+        <div className="space-y-4">
+          {gameState === "game-over" && (
+            <div className="text-center space-y-1 pt-4 border-t border-border">
+              <h3 className="text-xl font-semibold text-primary">Battle Performance Review</h3>
+              <p className="text-sm text-muted-foreground">Review your notes and timing from the battle</p>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <RealTimeNotesDisplay
+              notes={recordedNotes}
+              isRecording={isRecording && gameState === "player-turn"}
+              currentBeat={currentBeat}
+            />
+            <BattleDebugPanel
+              gameState={gameState}
+              currentBar={currentBar}
+              recordedNotes={recordedNotes}
+              licks={licks}
+              timingTolerance={timingTolerance}
+              turnPointsEarned={turnPointsEarned}
+              totalScore={playerScore}
+              isRecording={isRecording && gameState === "player-turn"}
+            />
+          </div>
         </div>
       )}
 
