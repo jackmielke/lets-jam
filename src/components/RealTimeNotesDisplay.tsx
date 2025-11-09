@@ -9,6 +9,7 @@ interface RealTimeNotesDisplayProps {
   isRecording: boolean;
   currentBeat: number;
   gameState?: string;
+  totalBars?: number;
   recognizedLicksPerBar?: Map<number, Array<{
     lick: Lick;
     accuracy: number;
@@ -28,10 +29,13 @@ export const RealTimeNotesDisplay = ({
   isRecording,
   currentBeat,
   gameState,
+  totalBars,
   recognizedLicksPerBar
 }: RealTimeNotesDisplayProps) => {
   const isGameOver = gameState === "game-over";
-  const playerTurnBars = [2, 4, 6, 8];
+  const playerTurnBars = totalBars 
+    ? Array.from({ length: totalBars / 2 }, (_, i) => (i + 1) * 2)
+    : [2, 4, 6, 8]; // Fallback for non-battle use
   
   // Default to first turn, or current turn if in battle
   const [selectedTurn, setSelectedTurn] = useState(1);

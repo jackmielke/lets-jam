@@ -318,6 +318,7 @@ export const BattleMode = ({
               isRecording={isRecording && gameState === "player-turn"}
               currentBeat={currentBeat}
               gameState={gameState}
+              totalBars={totalBars}
               recognizedLicksPerBar={recognizedLicksPerBar}
             />
             <BattleDebugPanel
