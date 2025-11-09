@@ -114,12 +114,8 @@ export const BattleMusicSelector: React.FC<BattleMusicSelectorProps> = ({
     };
   };
 
-  // Filter files that have metadata
-  const filesWithMetadata = musicFiles.filter(f =>
-    metadata.some(m => m.file_name === f.name)
-  );
-
   const currentInfo = selectedFile ? getPlaybackInfo(selectedFile) : null;
+  const currentMeta = metadata.find(m => m.file_name === selectedFile);
 
   return (
     <Card>
@@ -138,19 +134,18 @@ export const BattleMusicSelector: React.FC<BattleMusicSelectorProps> = ({
             <SelectValue placeholder="Select a track" />
           </SelectTrigger>
           <SelectContent>
-            {filesWithMetadata.length === 0 ? (
+            {musicFiles.length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground text-center">
-                No tracks with metadata available.<br />
-                Upload music and set metadata first.
+                No tracks available.<br />
+                Upload music first.
               </div>
             ) : (
-              filesWithMetadata.map((file) => {
-                const info = getPlaybackInfo(file.name);
+              musicFiles.map((file) => {
                 const meta = metadata.find(m => m.file_name === file.name);
                 return (
                   <SelectItem key={file.name} value={file.name}>
                     {meta?.title || file.name}
-                    {meta && ` (${meta.original_bpm} BPM${meta.musical_key ? ', ' + meta.musical_key : ''})`}
+                    {meta ? ` (${meta.original_bpm} BPM${meta.musical_key ? ', ' + meta.musical_key : ''})` : ' (No metadata)'}
                   </SelectItem>
                 );
               })
@@ -158,7 +153,15 @@ export const BattleMusicSelector: React.FC<BattleMusicSelectorProps> = ({
           </SelectContent>
         </Select>
 
-        {currentInfo && (
+        {!currentMeta && selectedFile && (
+          <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+            <p className="text-sm text-destructive">
+              ⚠️ No metadata found for this track. Please set metadata first for synchronized playback.
+            </p>
+          </div>
+        )}
+
+        {currentInfo && currentMeta && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Original BPM:</span>
@@ -186,12 +189,6 @@ export const BattleMusicSelector: React.FC<BattleMusicSelectorProps> = ({
               </p>
             )}
           </div>
-        )}
-
-        {filesWithMetadata.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Upload background music and set metadata to enable synchronized playback during battles.
-          </p>
         )}
       </CardContent>
     </Card>
