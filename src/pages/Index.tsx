@@ -325,7 +325,7 @@ const Index = () => {
   const musicSync = useMusicSync({
     battleBPM: metronomeBpm,
     metadata: battleMusicMetadata,
-    audioElement: battleAudioRef.current,
+    audioElement: battleAudioRef,
     enabled: !!battleMusicMetadata
   });
 

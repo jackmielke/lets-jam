@@ -8,7 +8,7 @@ interface MusicMetadata {
 interface UseMusicSyncProps {
   battleBPM: number;
   metadata: MusicMetadata | null;
-  audioElement: HTMLAudioElement | null;
+  audioElement: React.RefObject<HTMLAudioElement>;
   enabled: boolean;
 }
 
@@ -22,19 +22,20 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
 
   const startSyncedPlayback = useCallback(async () => {
     console.log("🎵 startSyncedPlayback() called");
-    if (!audioElement || !metadata || !enabled) {
-      console.log('❌ Cannot start synced playback:', { audioElement: !!audioElement, metadata: !!metadata, enabled });
+    const audioEl = audioElement.current;
+    if (!audioEl || !metadata || !enabled) {
+      console.log('❌ Cannot start synced playback:', { audioElement: !!audioEl, metadata: !!metadata, enabled });
       return;
     }
 
     try {
       console.log("🎵 Setting up audio element for synced playback");
       // Seek to cue point
-      audioElement.currentTime = metadata.cue_point_seconds;
+      audioEl.currentTime = metadata.cue_point_seconds;
       
       // Set playback rate to match battle BPM
       const playbackRate = calculatePlaybackRate();
-      audioElement.playbackRate = playbackRate;
+      audioEl.playbackRate = playbackRate;
       
       console.log('🎵 Starting synced playback:', {
         cuePoint: metadata.cue_point_seconds,
@@ -45,7 +46,7 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
       
       // Start playback
       console.log("🎵 Calling audioElement.play()...");
-      await audioElement.play();
+      await audioEl.play();
       console.log("✅ Audio playback started successfully");
       syncedRef.current = true;
     } catch (error) {
@@ -55,15 +56,16 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
 
   const stopSyncedPlayback = useCallback(() => {
     console.log("🎵 stopSyncedPlayback() called");
-    if (!audioElement) {
+    const audioEl = audioElement.current;
+    if (!audioEl) {
       console.log("❌ No audioElement to stop");
       return;
     }
     
     console.log("🛑 Pausing audio and resetting to start");
-    audioElement.pause();
-    audioElement.currentTime = 0;
-    audioElement.playbackRate = 1;
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    audioEl.playbackRate = 1;
     syncedRef.current = false;
     console.log("✅ Audio stopped successfully");
   }, [audioElement]);
@@ -72,7 +74,8 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
     if (!metadata) return null;
 
     const playbackRate = calculatePlaybackRate();
-    const adjustedDuration = audioElement ? audioElement.duration / playbackRate : 0;
+    const audioEl = audioElement.current;
+    const adjustedDuration = audioEl ? audioEl.duration / playbackRate : 0;
 
     return {
       playbackRate,
