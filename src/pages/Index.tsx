@@ -919,10 +919,15 @@ const Index = () => {
         {/* Battle Mode */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <BattleMusicSelector battleBPM={metronomeBpm} onSelectMusic={(metadata, url) => {
-            setBattleMusicMetadata(metadata);
-            setBattleMusicUrl(url);
-          }} selectedFileName={battleMusicMetadata?.file_name || null} />
+            <BattleMusicSelector 
+              battleBPM={metronomeBpm} 
+              onSelectMusic={(metadata, url) => {
+                setBattleMusicMetadata(metadata);
+                setBattleMusicUrl(url);
+              }} 
+              selectedFileName={battleMusicMetadata?.file_name || null}
+              refreshTrigger={musicRefreshTrigger}
+            />
           </div>
           
           <BattleMode licks={licks} onPlayLick={playLick} onStartMetronome={metronome.start} onStopMetronome={metronome.stop} bpm={metronomeBpm} recordedNotes={recordedNotes} onClearRecording={handleClearRecording} recognizedPoints={totalScore} onResetRecognizedLicks={resetRecognizedLicks} onResetScore={resetScore} onResetBattleHistory={() => setRecognizedLicksPerBar(new Map())} recognizedLicksPerBar={recognizedLicksPerBar} currentBeat={metronome.currentBeat} onBarChange={bar => {

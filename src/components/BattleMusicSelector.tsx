@@ -25,12 +25,14 @@ interface BattleMusicSelectorProps {
   battleBPM: number;
   onSelectMusic: (metadata: MusicMetadata, url: string) => void;
   selectedFileName: string | null;
+  refreshTrigger?: number;
 }
 
 export const BattleMusicSelector: React.FC<BattleMusicSelectorProps> = ({
   battleBPM,
   onSelectMusic,
-  selectedFileName
+  selectedFileName,
+  refreshTrigger
 }) => {
   const [musicFiles, setMusicFiles] = useState<MusicFile[]>([]);
   const [metadata, setMetadata] = useState<MusicMetadata[]>([]);
@@ -38,7 +40,7 @@ export const BattleMusicSelector: React.FC<BattleMusicSelectorProps> = ({
 
   useEffect(() => {
     loadMusicAndMetadata();
-  }, []);
+  }, [refreshTrigger]);
 
   const loadMusicAndMetadata = async () => {
     try {
