@@ -64,6 +64,11 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
 
     ws.on('click', (relativeX) => {
       const clickTime = relativeX * ws.getDuration();
+      console.log('WaveformEditor: Waveform clicked', {
+        relativeX,
+        duration: ws.getDuration(),
+        clickTime
+      });
       onCuePointChange(clickTime);
     });
 
@@ -83,7 +88,13 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
   useEffect(() => {
     if (!wavesurferRef.current || !isReady) return;
 
-    // We'll draw the cue point marker using a canvas overlay
+    // Get duration directly from wavesurfer to avoid stale state
+    const currentDuration = wavesurferRef.current.getDuration();
+    if (!currentDuration || currentDuration === 0) {
+      console.log('WaveformEditor: Duration not available yet');
+      return;
+    }
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -96,7 +107,14 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
     // Create new marker
     const marker = document.createElement('div');
     marker.className = 'cue-point-marker';
-    const markerPosition = (cuePoint / duration) * 100;
+    const markerPosition = (cuePoint / currentDuration) * 100;
+    
+    console.log('WaveformEditor: Rendering marker', {
+      cuePoint,
+      currentDuration,
+      markerPosition: `${markerPosition}%`,
+      isReady
+    });
     
     marker.style.cssText = `
       position: absolute;
@@ -128,7 +146,7 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
     marker.appendChild(label);
 
     container.appendChild(marker);
-  }, [cuePoint, isReady, duration]);
+  }, [cuePoint, isReady]);
 
   const togglePlayPause = () => {
     if (wavesurferRef.current) {
@@ -138,7 +156,15 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
 
   const seekToCuePoint = () => {
     if (wavesurferRef.current) {
-      wavesurferRef.current.seekTo(cuePoint / duration);
+      const currentDuration = wavesurferRef.current.getDuration();
+      if (currentDuration && currentDuration > 0) {
+        console.log('WaveformEditor: Seeking to cue point', {
+          cuePoint,
+          currentDuration,
+          seekRatio: cuePoint / currentDuration
+        });
+        wavesurferRef.current.seekTo(cuePoint / currentDuration);
+      }
     }
   };
 
