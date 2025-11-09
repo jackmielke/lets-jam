@@ -70,7 +70,7 @@ export const RealTimeNotesDisplay = ({
 
       {/* Turn Selector - only show in game-over state */}
       {isGameOver && (
-        <div className="flex gap-2 mb-3">
+        <div className="grid grid-cols-4 gap-2 mb-3">
           {playerTurnBars.map((bar, idx) => {
             const turnNum = idx + 1;
             const noteCount = notesPerTurn[idx];
@@ -80,7 +80,7 @@ export const RealTimeNotesDisplay = ({
                 variant={selectedTurn === turnNum ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedTurn(turnNum)}
-                className="flex-1 flex flex-col items-center gap-1 h-auto py-2"
+                className="flex flex-col items-center gap-1 h-auto py-2"
               >
                 <span className="text-xs font-semibold">Turn {turnNum}</span>
                 <span className="text-xs opacity-70">{noteCount} notes</span>
