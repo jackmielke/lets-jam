@@ -215,15 +215,15 @@ export const useBattleMode = ({
     setNpcMessage("yo let's jam!");
     toast.info("Get ready! Count-in starting...");
 
-    // Start metronome
+    // Start metronome and backing track together at count-in
     onStartMetronome();
+    onBattleStart?.(); // Start music with the count-in metronome
 
     // Wait for count-in (one bar = 4 beats)
     turnTimeoutRef.current = setTimeout(() => {
       console.log("⏰ Count-in complete! Setting barIndexRef to 1 and calling runBar()");
       // Start at bar 1 after count-in - this is when the battle actually begins
       barIndexRef.current = 1;
-      onBattleStart?.();
       runBar();
     }, barDuration);
   }, [licks.length, onStartMetronome, onClearRecording, onResetScore, onResetBattleHistory, onBattleStart, runBar, barDuration]);
