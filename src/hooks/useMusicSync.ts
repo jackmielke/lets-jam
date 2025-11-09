@@ -21,12 +21,14 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
   }, [battleBPM, metadata]);
 
   const startSyncedPlayback = useCallback(async () => {
+    console.log("🎵 startSyncedPlayback() called");
     if (!audioElement || !metadata || !enabled) {
-      console.log('Cannot start synced playback:', { audioElement, metadata, enabled });
+      console.log('❌ Cannot start synced playback:', { audioElement: !!audioElement, metadata: !!metadata, enabled });
       return;
     }
 
     try {
+      console.log("🎵 Setting up audio element for synced playback");
       // Seek to cue point
       audioElement.currentTime = metadata.cue_point_seconds;
       
@@ -34,7 +36,7 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
       const playbackRate = calculatePlaybackRate();
       audioElement.playbackRate = playbackRate;
       
-      console.log('Starting synced playback:', {
+      console.log('🎵 Starting synced playback:', {
         cuePoint: metadata.cue_point_seconds,
         playbackRate,
         battleBPM,
@@ -42,10 +44,12 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
       });
       
       // Start playback
+      console.log("🎵 Calling audioElement.play()...");
       await audioElement.play();
+      console.log("✅ Audio playback started successfully");
       syncedRef.current = true;
     } catch (error) {
-      console.error('Error starting synced playback:', error);
+      console.error('❌ Error starting synced playback:', error);
     }
   }, [audioElement, metadata, enabled, battleBPM, calculatePlaybackRate]);
 

@@ -926,15 +926,21 @@ const Index = () => {
           </div>
           
           <BattleMode licks={licks} onPlayLick={playLick} onStartMetronome={metronome.start} onStopMetronome={metronome.stop} bpm={metronomeBpm} recordedNotes={recordedNotes} onClearRecording={handleClearRecording} recognizedPoints={totalScore} onResetRecognizedLicks={resetRecognizedLicks} onResetScore={resetScore} onResetBattleHistory={() => setRecognizedLicksPerBar(new Map())} recognizedLicksPerBar={recognizedLicksPerBar} currentBeat={metronome.currentBeat} onBarChange={bar => {
+          console.log(`📊 onBarChange callback: bar ${bar} started`);
           currentBattleBarRef.current = bar;
           const now = performance.now();
           barWindowStartRef.current = now;
           barWindowEndRef.current = now + metronome.beatDuration * 4;
         }} isMetronomePlaying={metronome.isPlaying} timingTolerance={timingTolerance} isRecording={metronome.isPlaying} onBattleStart={() => {
+          console.log("📞 onBattleStart callback triggered in Index.tsx");
           if (battleMusicMetadata && battleMusicUrl) {
+            console.log("🎵 Battle music enabled, calling musicSync.startSyncedPlayback()");
             musicSync.startSyncedPlayback();
+          } else {
+            console.log("🔇 No battle music configured");
           }
         }} onBattleEnd={() => {
+          console.log("📞 onBattleEnd callback triggered in Index.tsx");
           musicSync.stopSyncedPlayback();
         }} />
 

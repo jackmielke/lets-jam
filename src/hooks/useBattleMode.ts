@@ -127,12 +127,16 @@ export const useBattleMode = ({
     }
 
     const barNumber = barIndexRef.current;
+    console.log(`🎯 runBar() called: barIndexRef.current=${barIndexRef.current}, barNumber=${barNumber}`);
+    
     setCurrentBar(barNumber);
     onBarChange(barNumber);
 
     const isNpcTurn = barNumber % 2 === 1; // 1,3,5,7 -> NPC; 2,4,6,8 -> Player
+    console.log(`🎮 Starting bar ${barNumber}: isNpcTurn=${isNpcTurn}, gameState will be ${isNpcTurn ? 'npc-turn' : 'player-turn'}`);
 
     if (isNpcTurn) {
+      console.log(`🤖 NPC TURN: Setting state to npc-turn for bar ${barNumber}`);
       setGameState("npc-turn");
       setNpcMessage("DJ KeyKid's turn!");
       
@@ -147,6 +151,7 @@ export const useBattleMode = ({
         runBar();
       }, barDuration);
     } else {
+      console.log(`👤 PLAYER TURN: Setting state to player-turn for bar ${barNumber}`);
       setGameState("player-turn");
       setNpcMessage("your turn!");
 
@@ -195,6 +200,7 @@ export const useBattleMode = ({
     onResetScore();
     onResetBattleHistory?.();
     
+    console.log("🚀 startGame() called: Initializing battle");
     setGameState("count-in");
     setCurrentBar(0);
     setPlayerScore(0);
@@ -202,7 +208,7 @@ export const useBattleMode = ({
     scoreSnapshotRef.current = 0;
     onClearRecording();
     
-    console.log("🎮 Battle starting: Score reset to 0");
+    console.log("🎮 Battle starting: Score reset to 0, barIndexRef.current =", barIndexRef.current);
     
     setNpcMessage("yo let's jam!");
     toast.info("Get ready! Count-in starting...");
@@ -212,6 +218,7 @@ export const useBattleMode = ({
 
     // Wait for count-in (one bar = 4 beats)
     turnTimeoutRef.current = setTimeout(() => {
+      console.log("⏰ Count-in complete! Setting barIndexRef to 1 and calling runBar()");
       // Start at bar 1 after count-in - this is when the battle actually begins
       barIndexRef.current = 1;
       onBattleStart?.();
