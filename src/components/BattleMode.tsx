@@ -199,7 +199,7 @@ export const BattleMode = ({
       </div>
 
       {/* Timing Type Filter */}
-      {!isGameActive && licks.length > 0 && (
+      {gameState === "waiting" && licks.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">Battle Timing:</Label>
