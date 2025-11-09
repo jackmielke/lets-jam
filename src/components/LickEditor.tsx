@@ -11,11 +11,22 @@ interface LickEditorProps {
   isEditing?: boolean;
   onSave?: () => void;
   canSave?: boolean;
+  timingType?: 'straight' | 'swing';
 }
 
-const subdivisions = [0, 0.25, 0.5, 0.75];
-
-export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = false, onSave, canSave = true }: LickEditorProps) => {
+export const LickEditor = ({ 
+  notes, 
+  onUpdateNote, 
+  beatsPerBar = 4, 
+  isEditing = false, 
+  onSave, 
+  canSave = true,
+  timingType = 'straight'
+}: LickEditorProps) => {
+  // Define subdivisions based on timing type
+  const subdivisions = timingType === 'straight' 
+    ? [0, 0.25, 0.5, 0.75]  // 16th notes
+    : [0, 0.333, 0.667];     // Triplets
   const [draggedNoteIndex, setDraggedNoteIndex] = useState<number | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -152,9 +163,19 @@ export const LickEditor = ({ notes, onUpdateNote, beatsPerBar = 4, isEditing = f
 
           {/* Legend */}
           <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
-            <div>• = On beat</div>
-            <div>+ = 8th note</div>
-            <div>· = 16th note</div>
+            {timingType === 'straight' ? (
+              <>
+                <div>• = On beat</div>
+                <div>+ = 8th note</div>
+                <div>· = 16th note</div>
+              </>
+            ) : (
+              <>
+                <div>• = On beat</div>
+                <div>+ = Triplet 2</div>
+                <div>· = Triplet 3</div>
+              </>
+            )}
           </div>
         </div>
       </div>

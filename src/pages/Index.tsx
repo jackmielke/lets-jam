@@ -31,6 +31,8 @@ import { Input } from "@/components/ui/input";
 import { Save, Trash } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 const drumSounds: DrumSound[] = [
 // Octava 3
 {
@@ -275,6 +277,7 @@ const Index = () => {
   const [steps, setSteps] = useState<boolean[][]>(drumSounds.map(() => Array(16).fill(false)));
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
   const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
+  const [currentTimingType, setCurrentTimingType] = useState<'straight' | 'swing'>('straight');
   const [selectedMusicFile, setSelectedMusicFile] = useState<{
     name: string;
     path: string;
@@ -400,6 +403,7 @@ const Index = () => {
           notes: row.notes as any, // Cast from jsonb to LickNote[]
           bpm: row.bpm,
           difficulty: row.difficulty || undefined,
+          timingType: (row.timing_type as 'straight' | 'swing') || 'straight',
           createdAt: new Date(row.created_at).getTime()
         }));
         setLicks(loadedLicks);
@@ -488,7 +492,7 @@ const Index = () => {
       toast.error("Please enter a lick name!");
       return;
     }
-    const quantizedNotes = quantizeRecording(recordedNotes);
+    const quantizedNotes = quantizeRecording(recordedNotes, currentTimingType);
     
     if (editingLickId) {
       // Update existing lick in Supabase
@@ -497,7 +501,8 @@ const Index = () => {
         .update({
           name: lickName.trim(),
           notes: quantizedNotes as any, // Cast to jsonb
-          bpm: metronomeBpm
+          bpm: metronomeBpm,
+          timing_type: currentTimingType
         })
         .eq('id', editingLickId);
       
@@ -512,13 +517,21 @@ const Index = () => {
         ...lick,
         name: lickName.trim(),
         notes: quantizedNotes,
-        bpm: metronomeBpm
+        bpm: metronomeBpm,
+        timingType: currentTimingType
       } : lick));
       toast.success(`Lick "${lickName}" updated!`);
     } else {
       // Create new lick
-      if (licks.length >= 5) {
-        toast.error("Maximum 5 licks reached!");
+      const straightCount = licks.filter(l => l.timingType === 'straight').length;
+      const swingCount = licks.filter(l => l.timingType === 'swing').length;
+      
+      if (currentTimingType === 'straight' && straightCount >= 5) {
+        toast.error("Maximum 5 straight licks reached!");
+        return;
+      }
+      if (currentTimingType === 'swing' && swingCount >= 5) {
+        toast.error("Maximum 5 swing licks reached!");
         return;
       }
       
@@ -527,6 +540,7 @@ const Index = () => {
         name: lickName.trim(),
         notes: quantizedNotes,
         bpm: metronomeBpm,
+        timingType: currentTimingType,
         createdAt: Date.now()
       };
       
@@ -538,6 +552,7 @@ const Index = () => {
           name: newLick.name,
           notes: newLick.notes as any, // Cast to jsonb
           bpm: newLick.bpm,
+          timing_type: newLick.timingType,
           user_id: null // No user authentication
         });
       
@@ -581,6 +596,7 @@ const Index = () => {
     }));
     setRecordedNotes(notes);
     setLickName(lick.name);
+    setCurrentTimingType(lick.timingType);
     setEditingLickId(lick.id);
     toast.info(`Editing: ${lick.name}`);
   }, []);
@@ -854,15 +870,42 @@ const Index = () => {
 
         {/* Metronome, Recording & Score */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Metronome isPlaying={metronome.isPlaying} currentBeat={metronome.currentBeat} beatsPerBar={4} bpm={metronomeBpm} onToggle={metronome.toggle} onBpmChange={setMetronomeBpm} />
+          <div className="space-y-4">
+            <Metronome isPlaying={metronome.isPlaying} currentBeat={metronome.currentBeat} beatsPerBar={4} bpm={metronomeBpm} onToggle={metronome.toggle} onBpmChange={setMetronomeBpm} />
+            
+            {/* Timing Type Toggle */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Recording Mode:</Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={currentTimingType === 'straight' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentTimingType('straight')}
+                    className="gap-1"
+                  >
+                    ♪ Straight
+                  </Button>
+                  <Button
+                    variant={currentTimingType === 'swing' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentTimingType('swing')}
+                    className="gap-1"
+                  >
+                    ³ Swing
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
           <div className="space-y-4">
             <RecordingDisplay notes={recordedNotes} isRecording={metronome.isPlaying} />
             {recordedNotes.length > 0 && !editingLickId && <div className="flex gap-2">
-                <Input placeholder="Lick name..." value={lickName} onChange={e => setLickName(e.target.value)} disabled={licks.length >= 5} className="flex-1" />
+                <Input placeholder="Lick name..." value={lickName} onChange={e => setLickName(e.target.value)} className="flex-1" />
                 <Button onClick={handleClearRecording} variant="outline" size="icon" className="shrink-0">
                   <Trash className="w-4 h-4" />
                 </Button>
-                <Button onClick={handleSaveLick} disabled={licks.length >= 5 || !lickName.trim()} className="gap-2 shrink-0">
+                <Button onClick={handleSaveLick} disabled={!lickName.trim()} className="gap-2 shrink-0">
                   <Save className="w-4 h-4" />
                   Save Lick
                 </Button>
@@ -904,7 +947,15 @@ const Index = () => {
         <LickSequencer availableLicks={licks} onPlaySequence={handlePlaySequence} isPlaying={isPlayingSequence} />
 
         {/* Lick Editor */}
-        <LickEditor notes={recordedNotes} onUpdateNote={handleUpdateNote} beatsPerBar={4} isEditing={!!editingLickId} onSave={editingLickId ? handleSaveLick : undefined} canSave={!!lickName.trim()} />
+        <LickEditor 
+          notes={recordedNotes} 
+          onUpdateNote={handleUpdateNote} 
+          beatsPerBar={4} 
+          isEditing={!!editingLickId} 
+          onSave={editingLickId ? handleSaveLick : undefined} 
+          canSave={!!lickName.trim()}
+          timingType={currentTimingType}
+        />
 
         {/* Background Music */}
         <div className="space-y-4">

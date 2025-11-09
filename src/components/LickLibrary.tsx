@@ -4,6 +4,7 @@ import { Music, Trash2, Play, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 interface LickLibraryProps {
   licks: Lick[];
@@ -15,11 +16,19 @@ interface LickLibraryProps {
 }
 
 export const LickLibrary = ({ licks, onDelete, onDemonstrate, onEdit, onUpdateDifficulty, editingLickId }: LickLibraryProps) => {
+  const straightLicks = licks.filter(l => l.timingType === 'straight').length;
+  const swingLicks = licks.filter(l => l.timingType === 'swing').length;
+  
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Music className="w-5 h-5 text-primary" />
-        <h3 className="text-xl font-semibold">Lick Library ({licks.length}/5)</h3>
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center gap-2">
+          <Music className="w-5 h-5 text-primary" />
+          <h3 className="text-xl font-semibold">Lick Library ({licks.length}/10)</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {straightLicks}/5 Straight • {swingLicks}/5 Swing
+        </p>
       </div>
       
       {licks.length === 0 ? (
@@ -38,7 +47,12 @@ export const LickLibrary = ({ licks, onDelete, onDemonstrate, onEdit, onUpdateDi
                 }`}
               >
               <div className="flex-1">
-                <div className="font-semibold">{lick.name}</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-semibold">{lick.name}</div>
+                  <Badge variant={lick.timingType === 'straight' ? 'default' : 'secondary'}>
+                    {lick.timingType === 'straight' ? '♪ Straight' : '³ Swing'}
+                  </Badge>
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {lick.notes.length} notes • {lick.bpm} BPM
                 </div>

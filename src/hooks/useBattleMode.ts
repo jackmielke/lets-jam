@@ -7,6 +7,7 @@ type GameState = "waiting" | "count-in" | "npc-turn" | "player-turn" | "game-ove
 
 interface UseBattleModeProps {
   licks: Lick[];
+  battleTimingType: 'straight' | 'swing' | 'both';
   onPlayLick: (lick: Lick) => number;
   onStartMetronome: () => void;
   onStopMetronome: () => void;
@@ -24,6 +25,7 @@ interface UseBattleModeProps {
 
 export const useBattleMode = ({
   licks,
+  battleTimingType,
   onPlayLick,
   onStartMetronome,
   onStopMetronome,
@@ -75,19 +77,24 @@ export const useBattleMode = ({
   }, [clearTurnTimeout]);
 
   const playNPCTurn = useCallback(() => {
-    if (licks.length === 0) {
+    // Filter licks based on timing type
+    const availableLicks = battleTimingType === 'both'
+      ? licks
+      : licks.filter(l => l.timingType === battleTimingType);
+      
+    if (availableLicks.length === 0) {
       toast.error("No licks available for NPC to play!");
       return;
     }
 
-    // Pick a random lick
-    const randomLick = licks[Math.floor(Math.random() * licks.length)];
+    // Pick a random lick from available licks
+    const randomLick = availableLicks[Math.floor(Math.random() * availableLicks.length)];
     
     setNpcMessage(`Playing: ${randomLick.name}`);
     onPlayLick(randomLick);
     
     toast.info(`DJ KeyKid plays: ${randomLick.name}`);
-  }, [licks, onPlayLick]);
+  }, [licks, battleTimingType, onPlayLick]);
 
   const endGame = useCallback(() => {
     setGameState("game-over");

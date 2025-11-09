@@ -8,6 +8,8 @@ import { RealTimeNotesDisplay } from "./RealTimeNotesDisplay";
 import { useBattleMode } from "@/hooks/useBattleMode";
 import { Lick } from "@/types/lick";
 import { RecordedNote } from "@/types/recording";
+import { Label } from "./ui/label";
+import { useState } from "react";
 
 interface BattleModeProps {
   licks: Lick[];
@@ -56,6 +58,7 @@ export const BattleMode = ({
   onBattleStart,
   onBattleEnd
 }: BattleModeProps) => {
+  const [battleTimingType, setBattleTimingType] = useState<'straight' | 'swing' | 'both'>('both');
 
   const {
     gameState,
@@ -69,6 +72,7 @@ export const BattleMode = ({
     stopGame,
   } = useBattleMode({
     licks,
+    battleTimingType,
     onPlayLick,
     onStartMetronome,
     onStopMetronome,
@@ -193,6 +197,44 @@ export const BattleMode = ({
           </Card>
         </div>
       </div>
+
+      {/* Timing Type Filter */}
+      {!isGameActive && licks.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Battle Timing:</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={battleTimingType === 'straight' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBattleTimingType('straight')}
+              >
+                Straight Only
+              </Button>
+              <Button
+                variant={battleTimingType === 'swing' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBattleTimingType('swing')}
+              >
+                Swing Only
+              </Button>
+              <Button
+                variant={battleTimingType === 'both' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBattleTimingType('both')}
+              >
+                Both
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {battleTimingType === 'both' 
+              ? `${licks.length} licks available`
+              : `${licks.filter(l => l.timingType === battleTimingType).length} ${battleTimingType} licks available`
+            }
+          </p>
+        </Card>
+      )}
 
       <div className="flex justify-center gap-4">
         {!isGameActive ? (
