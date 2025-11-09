@@ -97,8 +97,10 @@ export const useBattleMode = ({
   }, [licks, battleTimingType, onPlayLick]);
 
   const endGame = useCallback(() => {
+    console.log("🏁 endGame() called - stopping battle");
     setGameState("game-over");
     onStopMetronome();
+    console.log("🎵 Calling onBattleEnd to stop music");
     onBattleEnd?.();
     clearAllTimeouts();
     
@@ -227,16 +229,19 @@ export const useBattleMode = ({
   }, [licks.length, onStartMetronome, onClearRecording, onResetScore, onResetBattleHistory, onBattleStart, runBar, barDuration]);
 
   const stopGame = useCallback(() => {
+    console.log("🛑 stopGame() called - resetting battle");
     setGameState("waiting");
     setCurrentBar(0);
     barIndexRef.current = 0;
     setPlayerScore(0);
     setBarScores(new Map());
     onStopMetronome();
+    console.log("🎵 Calling onBattleEnd to stop music (from stopGame)");
+    onBattleEnd?.();
     clearAllTimeouts();
     onClearRecording();
     setNpcMessage("");
-  }, [onStopMetronome, clearAllTimeouts, onClearRecording]);
+  }, [onStopMetronome, onBattleEnd, clearAllTimeouts, onClearRecording]);
 
   // Cleanup on unmount
   useEffect(() => {

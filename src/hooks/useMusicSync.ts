@@ -54,12 +54,18 @@ export const useMusicSync = ({ battleBPM, metadata, audioElement, enabled }: Use
   }, [audioElement, metadata, enabled, battleBPM, calculatePlaybackRate]);
 
   const stopSyncedPlayback = useCallback(() => {
-    if (!audioElement) return;
+    console.log("🎵 stopSyncedPlayback() called");
+    if (!audioElement) {
+      console.log("❌ No audioElement to stop");
+      return;
+    }
     
+    console.log("🛑 Pausing audio and resetting to start");
     audioElement.pause();
     audioElement.currentTime = 0;
     audioElement.playbackRate = 1;
     syncedRef.current = false;
+    console.log("✅ Audio stopped successfully");
   }, [audioElement]);
 
   const getPlaybackInfo = useCallback(() => {
