@@ -83,7 +83,7 @@ export type Database = {
           name: string
           notes: Json
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           bpm: number
@@ -93,7 +93,7 @@ export type Database = {
           name: string
           notes: Json
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           bpm?: number
@@ -103,7 +103,7 @@ export type Database = {
           name?: string
           notes?: Json
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

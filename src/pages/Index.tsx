@@ -268,11 +268,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
-  const [licks, setLicks] = useState<Lick[]>(() => {
-    // Load saved licks from localStorage on initial mount
-    const saved = localStorage.getItem('pianomaker-licks');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [licks, setLicks] = useState<Lick[]>([]);
   const [lickName, setLickName] = useState("");
   const [editingLickId, setEditingLickId] = useState<string | null>(null);
   const [isPlayingSequence, setIsPlayingSequence] = useState(false);
@@ -358,10 +354,60 @@ const Index = () => {
     loadMusic();
   }, [musicRefreshTrigger]);
 
-  // Persist licks to localStorage whenever they change
+  // Load licks from Supabase and perform one-time migration from localStorage
   useEffect(() => {
-    localStorage.setItem('pianomaker-licks', JSON.stringify(licks));
-  }, [licks]);
+    const loadAndMigrateLicks = async () => {
+      // Check for localStorage licks to migrate
+      const localLicks = localStorage.getItem('pianomaker-licks');
+      
+      if (localLicks) {
+        try {
+          const parsedLicks: Lick[] = JSON.parse(localLicks);
+          
+          // Upload each lick to Supabase
+          for (const lick of parsedLicks) {
+            await supabase.from('licks').insert({
+              id: lick.id,
+              name: lick.name,
+              notes: lick.notes as any, // Cast to any for jsonb
+              bpm: lick.bpm,
+              difficulty: lick.difficulty,
+              user_id: null // No user authentication
+            });
+          }
+          
+          // Clear localStorage after successful migration
+          localStorage.removeItem('pianomaker-licks');
+          toast.success(`Migrated ${parsedLicks.length} lick(s) to database!`);
+        } catch (error) {
+          console.error('Error migrating licks:', error);
+        }
+      }
+      
+      // Load licks from Supabase
+      const { data, error } = await supabase
+        .from('licks')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error loading licks:', error);
+        toast.error('Failed to load licks from database');
+      } else if (data) {
+        const loadedLicks: Lick[] = data.map(row => ({
+          id: row.id,
+          name: row.name,
+          notes: row.notes as any, // Cast from jsonb to LickNote[]
+          bpm: row.bpm,
+          difficulty: row.difficulty || undefined,
+          createdAt: new Date(row.created_at).getTime()
+        }));
+        setLicks(loadedLicks);
+      }
+    };
+    
+    loadAndMigrateLicks();
+  }, []);
 
   // Setup latency monitoring
   useEffect(() => {
@@ -433,7 +479,7 @@ const Index = () => {
     setLickName("");
     toast.success("Recording cleared!");
   }, []);
-  const handleSaveLick = useCallback(() => {
+  const handleSaveLick = useCallback(async () => {
     if (recordedNotes.length === 0) {
       toast.error("No notes recorded!");
       return;
@@ -443,8 +489,25 @@ const Index = () => {
       return;
     }
     const quantizedNotes = quantizeRecording(recordedNotes);
+    
     if (editingLickId) {
-      // Update existing lick
+      // Update existing lick in Supabase
+      const { error } = await supabase
+        .from('licks')
+        .update({
+          name: lickName.trim(),
+          notes: quantizedNotes as any, // Cast to jsonb
+          bpm: metronomeBpm
+        })
+        .eq('id', editingLickId);
+      
+      if (error) {
+        console.error('Error updating lick:', error);
+        toast.error('Failed to update lick');
+        return;
+      }
+      
+      // Update local state
       setLicks(prev => prev.map(lick => lick.id === editingLickId ? {
         ...lick,
         name: lickName.trim(),
@@ -458,6 +521,7 @@ const Index = () => {
         toast.error("Maximum 5 licks reached!");
         return;
       }
+      
       const newLick: Lick = {
         id: Date.now().toString(),
         name: lickName.trim(),
@@ -465,9 +529,29 @@ const Index = () => {
         bpm: metronomeBpm,
         createdAt: Date.now()
       };
+      
+      // Insert into Supabase
+      const { error } = await supabase
+        .from('licks')
+        .insert({
+          id: newLick.id,
+          name: newLick.name,
+          notes: newLick.notes as any, // Cast to jsonb
+          bpm: newLick.bpm,
+          user_id: null // No user authentication
+        });
+      
+      if (error) {
+        console.error('Error saving lick:', error);
+        toast.error('Failed to save lick');
+        return;
+      }
+      
+      // Update local state
       setLicks(prev => [...prev, newLick]);
       toast.success(`Lick "${newLick.name}" saved!`);
     }
+    
     setRecordedNotes([]);
     setLickName("");
     setEditingLickId(null);
@@ -500,7 +584,20 @@ const Index = () => {
     setEditingLickId(lick.id);
     toast.info(`Editing: ${lick.name}`);
   }, []);
-  const handleDeleteLick = useCallback((lickId: string) => {
+  const handleDeleteLick = useCallback(async (lickId: string) => {
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('licks')
+      .delete()
+      .eq('id', lickId);
+    
+    if (error) {
+      console.error('Error deleting lick:', error);
+      toast.error('Failed to delete lick');
+      return;
+    }
+    
+    // Update local state
     setLicks(prev => prev.filter(l => l.id !== lickId));
     if (editingLickId === lickId) {
       setEditingLickId(null);
@@ -509,7 +606,20 @@ const Index = () => {
     }
     toast.success("Lick deleted!");
   }, [editingLickId]);
-  const handleUpdateDifficulty = useCallback((lickId: string, difficulty: number) => {
+  const handleUpdateDifficulty = useCallback(async (lickId: string, difficulty: number) => {
+    // Update in Supabase
+    const { error } = await supabase
+      .from('licks')
+      .update({ difficulty: difficulty || null })
+      .eq('id', lickId);
+    
+    if (error) {
+      console.error('Error updating difficulty:', error);
+      toast.error('Failed to update difficulty');
+      return;
+    }
+    
+    // Update local state
     setLicks(prev => prev.map(lick => lick.id === lickId ? {
       ...lick,
       difficulty: difficulty || undefined
