@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { WaveformEditor } from '@/components/WaveformEditor';
 
 interface MusicFile {
   name: string;
@@ -40,7 +41,6 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
     cue_point_seconds: 0,
     duration_seconds: null
   });
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const selectedMusicFile = musicFiles.find(f => f.name === selectedFileName);
 
@@ -97,11 +97,6 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
   };
 
   const handleFileChange = (fileName: string) => {
-    // Pause current playback
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
     setSelectedFileName(fileName);
   };
 
@@ -143,35 +138,6 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
     onSaved?.();
   };
 
-  const handleSetCuePoint = () => {
-    if (audioRef.current) {
-      setMetadata(prev => ({
-        ...prev,
-        cue_point_seconds: audioRef.current!.currentTime
-      }));
-      toast({
-        title: "Cue point set",
-        description: `Set to ${audioRef.current.currentTime.toFixed(2)}s`
-      });
-    }
-  };
-
-  const handleSeekToCuePoint = () => {
-    if (audioRef.current && metadata.cue_point_seconds !== undefined) {
-      audioRef.current.currentTime = metadata.cue_point_seconds;
-    }
-  };
-
-  const togglePlayback = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
 
   if (musicFiles.length === 0) {
     return (
@@ -246,39 +212,41 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
         </div>
 
         <div className="space-y-2">
-          <Label>Cue Point (seconds)</Label>
-          <div className="flex gap-2">
+          <Label>Cue Point & Waveform</Label>
+          {selectedMusicFile?.url && (
+            <WaveformEditor
+              audioUrl={selectedMusicFile.url}
+              cuePoint={metadata.cue_point_seconds || 0}
+              onCuePointChange={(seconds) => {
+                setMetadata(prev => ({ ...prev, cue_point_seconds: seconds }));
+              }}
+              height={200}
+            />
+          )}
+          <div className="flex gap-2 pt-2">
             <Input
               type="number"
-              step="0.1"
+              step="0.01"
               min="0"
               value={metadata.cue_point_seconds || 0}
               onChange={(e) => setMetadata(prev => ({ ...prev, cue_point_seconds: Number(e.target.value) }))}
+              className="flex-1"
+              placeholder="Fine-tune cue point"
             />
-            <Button onClick={handleSetCuePoint} variant="outline">
-              Set Current Time
-            </Button>
-            <Button onClick={handleSeekToCuePoint} variant="outline">
-              Jump to Cue
-            </Button>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Preview Audio</Label>
-          <div className="flex gap-2">
-            <Button onClick={togglePlayback} variant="outline" className="flex-1">
-              {isPlaying ? 'Pause' : 'Play'} Preview
-            </Button>
-          </div>
-          <audio
-            ref={audioRef}
-            src={selectedMusicFile?.url}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
-          />
-        </div>
+        <audio
+          ref={audioRef}
+          src={selectedMusicFile?.url}
+          onLoadedMetadata={(e) => {
+            const audio = e.currentTarget;
+            setMetadata(prev => ({
+              ...prev,
+              duration_seconds: audio.duration
+            }));
+          }}
+        />
 
         {metadata.duration_seconds && (
           <p className="text-sm text-muted-foreground">
