@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
 interface MusicFile {
@@ -23,16 +24,17 @@ interface MusicMetadata {
 }
 
 interface MusicMetadataEditorProps {
-  musicFile: MusicFile;
+  musicFiles: MusicFile[];
   onSaved?: () => void;
 }
 
-export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicFile, onSaved }) => {
+export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicFiles, onSaved }) => {
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string>(musicFiles[0]?.name || '');
   const [metadata, setMetadata] = useState<Partial<MusicMetadata>>({
-    file_name: musicFile.name,
-    title: musicFile.name.replace(/\.[^/.]+$/, ''), // Remove file extension
+    file_name: musicFiles[0]?.name || '',
+    title: musicFiles[0]?.name.replace(/\.[^/.]+$/, '') || '', // Remove file extension
     original_bpm: 120,
     musical_key: '',
     cue_point_seconds: 0,
@@ -40,9 +42,11 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
   });
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const selectedMusicFile = musicFiles.find(f => f.name === selectedFileName);
+
   useEffect(() => {
     loadMetadata();
-  }, [musicFile.name]);
+  }, [selectedFileName]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -59,10 +63,12 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
   }, []);
 
   const loadMetadata = async () => {
+    if (!selectedFileName) return;
+    
     const { data, error } = await supabase
       .from('background_music_metadata')
       .select('*')
-      .eq('file_name', musicFile.name)
+      .eq('file_name', selectedFileName)
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
@@ -77,7 +83,26 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
         cue_point_seconds: Number(data.cue_point_seconds),
         duration_seconds: data.duration_seconds ? Number(data.duration_seconds) : null
       });
+    } else {
+      // Reset to defaults if no metadata exists
+      setMetadata({
+        file_name: selectedFileName,
+        title: selectedFileName.replace(/\.[^/.]+$/, ''),
+        original_bpm: 120,
+        musical_key: '',
+        cue_point_seconds: 0,
+        duration_seconds: null
+      });
     }
+  };
+
+  const handleFileChange = (fileName: string) => {
+    // Pause current playback
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+    setSelectedFileName(fileName);
   };
 
   const handleSave = async () => {
@@ -93,7 +118,7 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
     const { error } = await supabase
       .from('background_music_metadata')
       .upsert({
-        file_name: musicFile.name,
+        file_name: selectedFileName,
         title: metadata.title,
         original_bpm: metadata.original_bpm,
         musical_key: metadata.musical_key || null,
@@ -148,15 +173,43 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
     }
   };
 
+  if (musicFiles.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Music Metadata</CardTitle>
+          <CardDescription>
+            No music files uploaded yet
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Music Metadata: {musicFile.name}</CardTitle>
+        <CardTitle>Music Metadata</CardTitle>
         <CardDescription>
           Set BPM, key, and cue point for battle synchronization
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="track-select">Select Track</Label>
+          <Select value={selectedFileName} onValueChange={handleFileChange}>
+            <SelectTrigger id="track-select">
+              <SelectValue placeholder="Select a track" />
+            </SelectTrigger>
+            <SelectContent>
+              {musicFiles.map((file) => (
+                <SelectItem key={file.name} value={file.name}>
+                  {file.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="title">Track Title</Label>
           <Input
@@ -220,7 +273,7 @@ export const MusicMetadataEditor: React.FC<MusicMetadataEditorProps> = ({ musicF
           </div>
           <audio
             ref={audioRef}
-            src={musicFile.url}
+            src={selectedMusicFile?.url}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}

@@ -971,25 +971,11 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <BackgroundMusicUpload onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)} />
             <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
-            {selectedMusicFile && <MusicMetadataEditor musicFile={selectedMusicFile} onSaved={() => {
-            toast.success("Metadata saved!");
-            setMusicRefreshTrigger(prev => prev + 1);
-          }} />}
+            <MusicMetadataEditor musicFiles={musicFiles} onSaved={() => {
+              toast.success("Metadata saved!");
+              setMusicRefreshTrigger(prev => prev + 1);
+            }} />
           </div>
-          {musicFiles.length > 0 && !selectedMusicFile && <div className="flex justify-center">
-              <Button variant="outline" onClick={() => {
-            if (musicFiles.length > 0) {
-              setSelectedMusicFile(musicFiles[0]);
-            }
-          }}>
-                Set Metadata for Tracks
-              </Button>
-            </div>}
-          {selectedMusicFile && <div className="flex justify-center">
-              <Button variant="ghost" onClick={() => setSelectedMusicFile(null)}>
-                Done Editing Metadata
-              </Button>
-            </div>}
         </div>
 
         {/* Audio Samples */}
