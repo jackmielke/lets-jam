@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { Button } from '@/components/ui/button';
-import { Play, Pause } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Play, Pause, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface WaveformEditorProps {
   audioUrl: string;
@@ -22,6 +23,7 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
   const [isReady, setIsReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(50);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -29,7 +31,7 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
     // Initialize WaveSurfer
     const ws = WaveSurfer.create({
       container: containerRef.current,
-      waveColor: 'hsl(var(--muted-foreground) / 0.3)',
+      waveColor: 'hsl(var(--muted-foreground) / 0.8)',
       progressColor: 'hsl(var(--primary))',
       cursorColor: 'hsl(var(--primary))',
       barWidth: 2,
@@ -39,6 +41,7 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
       normalize: true,
       backend: 'WebAudio',
       interact: true,
+      minPxPerSec: zoomLevel,
     });
 
     wavesurferRef.current = ws;
@@ -67,7 +70,14 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
     return () => {
       ws.destroy();
     };
-  }, [audioUrl, height]);
+  }, [audioUrl, height, zoomLevel]);
+
+  // Update zoom when slider changes
+  useEffect(() => {
+    if (wavesurferRef.current && isReady) {
+      wavesurferRef.current.zoom(zoomLevel);
+    }
+  }, [zoomLevel, isReady]);
 
   // Update cue point marker
   useEffect(() => {
@@ -132,6 +142,18 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
     }
   };
 
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(500, prev + 25));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(10, prev - 25));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(50);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -140,8 +162,8 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="relative bg-background border border-border rounded-lg overflow-hidden" style={{ height: height + 'px' }}>
+    <div className="space-y-3">
+      <div className="relative bg-background border border-border rounded-lg overflow-hidden overflow-x-auto" style={{ height: height + 'px' }}>
         <div ref={containerRef} className="w-full h-full" />
         {!isReady && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80">
@@ -176,8 +198,54 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
         </div>
       </div>
 
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleZoomOut}
+            disabled={!isReady || zoomLevel <= 10}
+            variant="outline"
+            size="sm"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          
+          <div className="flex-1 flex items-center gap-3">
+            <Slider
+              value={[zoomLevel]}
+              onValueChange={(value) => setZoomLevel(value[0])}
+              min={10}
+              max={500}
+              step={5}
+              disabled={!isReady}
+              className="flex-1"
+            />
+            <span className="text-xs text-muted-foreground min-w-[80px]">
+              Zoom: {zoomLevel}px/s
+            </span>
+          </div>
+
+          <Button
+            onClick={handleZoomIn}
+            disabled={!isReady || zoomLevel >= 500}
+            variant="outline"
+            size="sm"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+
+          <Button
+            onClick={handleResetZoom}
+            disabled={!isReady}
+            variant="outline"
+            size="sm"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       <p className="text-xs text-muted-foreground">
-        Click anywhere on the waveform to set the cue point
+        Click anywhere on the waveform to set the cue point. Use zoom controls for precise placement.
       </p>
     </div>
   );
