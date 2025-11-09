@@ -70,9 +70,9 @@ export const WaveformEditor: React.FC<WaveformEditorProps> = ({
     return () => {
       ws.destroy();
     };
-  }, [audioUrl, height, zoomLevel]);
+  }, [audioUrl, height]);
 
-  // Update zoom when slider changes
+  // Update zoom when slider changes (only after audio is ready)
   useEffect(() => {
     if (wavesurferRef.current && isReady) {
       wavesurferRef.current.zoom(zoomLevel);
