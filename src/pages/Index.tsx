@@ -23,7 +23,7 @@ import { useLickRecognition } from "@/hooks/useLickRecognition";
 import { useMusicSync } from "@/hooks/useMusicSync";
 import { DrumSound } from "@/types/audio";
 import { RecordedNote } from "@/types/recording";
-import { Lick } from "@/types/lick";
+import { Lick, LickNote } from "@/types/lick";
 import { quantizeRecording } from "@/utils/quantize";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -535,32 +535,34 @@ const Index = () => {
         return;
       }
       
-      const newLick: Lick = {
-        id: Date.now().toString(),
-        name: lickName.trim(),
-        notes: quantizedNotes,
-        bpm: metronomeBpm,
-        timingType: currentTimingType,
-        createdAt: Date.now()
-      };
-      
-      // Insert into Supabase
-      const { error } = await supabase
+      // Insert into Supabase and get generated UUID
+      const { data, error } = await supabase
         .from('licks')
         .insert({
-          id: newLick.id,
-          name: newLick.name,
-          notes: newLick.notes as any, // Cast to jsonb
-          bpm: newLick.bpm,
-          timing_type: newLick.timingType,
+          name: lickName.trim(),
+          notes: quantizedNotes as any, // Cast to jsonb
+          bpm: metronomeBpm,
+          timing_type: currentTimingType,
           user_id: null // No user authentication
-        });
+        })
+        .select()
+        .single();
       
-      if (error) {
+      if (error || !data) {
         console.error('Error saving lick:', error);
         toast.error('Failed to save lick');
         return;
       }
+      
+      // Create local lick object with UUID from database
+      const newLick: Lick = {
+        id: data.id,
+        name: data.name,
+        notes: data.notes as unknown as LickNote[],
+        bpm: data.bpm,
+        timingType: data.timing_type as 'straight' | 'swing',
+        createdAt: new Date(data.created_at).getTime()
+      };
       
       // Update local state
       setLicks(prev => [...prev, newLick]);
