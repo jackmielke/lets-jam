@@ -8,6 +8,7 @@ type GameState = "waiting" | "count-in" | "npc-turn" | "player-turn" | "game-ove
 interface UseBattleModeProps {
   licks: Lick[];
   battleTimingType: 'straight' | 'swing' | 'both';
+  totalBars: number;
   onPlayLick: (lick: Lick) => number;
   onStartMetronome: () => void;
   onStopMetronome: () => void;
@@ -26,6 +27,7 @@ interface UseBattleModeProps {
 export const useBattleMode = ({
   licks,
   battleTimingType,
+  totalBars,
   onPlayLick,
   onStartMetronome,
   onStopMetronome,
@@ -59,7 +61,6 @@ export const useBattleMode = ({
     recognizedPointsRef.current = recognizedPoints;
   }, [recognizedPoints]);
 
-  const TOTAL_BARS = 8;
   const beatDuration = (60 / bpm) * 1000;
   const barDuration = beatDuration * 4; // 4 beats per bar
 
@@ -108,7 +109,7 @@ export const useBattleMode = ({
     const lastBarPoints = Math.max(0, recognizedPointsRef.current - scoreSnapshotRef.current);
     
     // Update bar scores to include the final bar
-    setBarScores(prev => new Map(prev).set(TOTAL_BARS, lastBarPoints));
+    setBarScores(prev => new Map(prev).set(totalBars, lastBarPoints));
     
     // Use functional update to avoid stale closure issues
     setPlayerScore(prev => {
@@ -119,11 +120,11 @@ export const useBattleMode = ({
     });
     
     setNpcMessage("alright battle's over!");
-  }, [onStopMetronome, onBattleEnd, clearAllTimeouts, TOTAL_BARS]);
+  }, [onStopMetronome, onBattleEnd, clearAllTimeouts, totalBars]);
 
   const runBar = useCallback(() => {
-    // End condition: after TOTAL_BARS
-    if (barIndexRef.current > TOTAL_BARS) {
+    // End condition: after totalBars
+    if (barIndexRef.current > totalBars) {
       endGame();
       return;
     }
@@ -190,7 +191,7 @@ export const useBattleMode = ({
       // Track points timeout so it can be cleared if game stops
       pointsTimeoutsRef.current.push(pointsTimeoutId);
     }
-  }, [TOTAL_BARS, barDuration, endGame, onClearRecording, onResetRecognizedLicks, playNPCTurn, clearTurnTimeout]);
+  }, [totalBars, barDuration, endGame, onClearRecording, onResetRecognizedLicks, playNPCTurn, clearTurnTimeout]);
 
   const startGame = useCallback(() => {
     if (licks.length === 0) {
@@ -257,7 +258,7 @@ export const useBattleMode = ({
     turnPointsEarned,
     npcMessage,
     barScores,
-    TOTAL_BARS,
+    totalBars,
     startGame,
     stopGame,
   };

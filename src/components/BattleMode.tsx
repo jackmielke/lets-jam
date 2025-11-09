@@ -59,6 +59,7 @@ export const BattleMode = ({
   onBattleEnd
 }: BattleModeProps) => {
   const [battleTimingType, setBattleTimingType] = useState<'straight' | 'swing' | 'both'>('both');
+  const [battleTotalBars, setBattleTotalBars] = useState<8 | 12 | 16>(8);
 
   const {
     gameState,
@@ -67,12 +68,13 @@ export const BattleMode = ({
     turnPointsEarned,
     npcMessage,
     barScores,
-    TOTAL_BARS,
+    totalBars,
     startGame,
     stopGame,
   } = useBattleMode({
     licks,
     battleTimingType,
+    totalBars: battleTotalBars,
     onPlayLick,
     onStartMetronome,
     onStopMetronome,
@@ -106,7 +108,7 @@ export const BattleMode = ({
           <TurnIndicator
             currentTurn={gameState}
             barNumber={currentBar}
-            totalBars={TOTAL_BARS}
+            totalBars={totalBars}
             playerScore={playerScore}
             turnPointsEarned={turnPointsEarned}
           />
@@ -136,7 +138,7 @@ export const BattleMode = ({
           {/* Per-Bar Score Display - Stays visible after game ends */}
           {gameState !== "count-in" && (
             <div className="flex justify-center items-center gap-2 flex-wrap px-4">
-              {[2, 4, 6, 8].map((barNum) => {
+              {Array.from({ length: totalBars / 2 }, (_, i) => (i + 1) * 2).map((barNum) => {
                 const score = barScores.get(barNum);
                 const isCurrent = currentBar === barNum && gameState === "player-turn";
                 const isPast = currentBar > barNum || gameState === "game-over";
@@ -232,6 +234,41 @@ export const BattleMode = ({
               ? `${licks.length} licks available`
               : `${licks.filter(l => l.timingType === battleTimingType).length} ${battleTimingType} licks available`
             }
+          </p>
+        </Card>
+      )}
+
+      {/* Battle Length Selection */}
+      {(gameState === "waiting" || gameState === "game-over") && licks.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Battle Length:</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={battleTotalBars === 8 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBattleTotalBars(8)}
+              >
+                8 Bars
+              </Button>
+              <Button
+                variant={battleTotalBars === 12 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBattleTotalBars(12)}
+              >
+                12 Bars
+              </Button>
+              <Button
+                variant={battleTotalBars === 16 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBattleTotalBars(16)}
+              >
+                16 Bars
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {battleTotalBars === 8 ? '4 player turns' : battleTotalBars === 12 ? '6 player turns' : '8 player turns'} — More turns = higher potential score!
           </p>
         </Card>
       )}
