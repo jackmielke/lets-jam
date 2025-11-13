@@ -724,10 +724,27 @@ const Index = () => {
           <ScoreDisplay score={totalScore} recentRecognition={recentRecognition} onReset={resetScore} timingTolerance={timingTolerance} onToleranceChange={setTimingTolerance} />
         </div>
 
+        {/* Lick Library */}
+        <LickLibrary licks={licks} onDelete={handleDeleteLick} onDemonstrate={handleDemonstrateLick} onEdit={handleEditLick} onUpdateDifficulty={handleUpdateDifficulty} editingLickId={editingLickId} />
+
+        {/* Lick Sequencer */}
+        <LickSequencer availableLicks={licks} onPlaySequence={handlePlaySequence} isPlaying={isPlayingSequence} />
+
+        {/* Lick Editor */}
+        <LickEditor 
+          notes={recordedNotes} 
+          onUpdateNote={handleUpdateNote} 
+          beatsPerBar={4} 
+          isEditing={!!editingLickId} 
+          onSave={editingLickId ? handleSaveLick : undefined} 
+          canSave={!!lickName.trim()}
+          timingType={currentTimingType}
+        />
+
         {/* Battle Mode */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <BattleMusicSelector 
+            <BattleMusicSelector
               battleBPM={metronomeBpm} 
               onSelectMusic={(metadata, url) => {
                 setBattleMusicMetadata(metadata);
@@ -760,23 +777,6 @@ const Index = () => {
           {/* Hidden audio element for synced music */}
           {battleMusicUrl && <audio ref={battleAudioRef} src={battleMusicUrl} preload="auto" />}
         </div>
-
-        {/* Lick Library */}
-        <LickLibrary licks={licks} onDelete={handleDeleteLick} onDemonstrate={handleDemonstrateLick} onEdit={handleEditLick} onUpdateDifficulty={handleUpdateDifficulty} editingLickId={editingLickId} />
-
-        {/* Lick Sequencer */}
-        <LickSequencer availableLicks={licks} onPlaySequence={handlePlaySequence} isPlaying={isPlayingSequence} />
-
-        {/* Lick Editor */}
-        <LickEditor 
-          notes={recordedNotes} 
-          onUpdateNote={handleUpdateNote} 
-          beatsPerBar={4} 
-          isEditing={!!editingLickId} 
-          onSave={editingLickId ? handleSaveLick : undefined} 
-          canSave={!!lickName.trim()}
-          timingType={currentTimingType}
-        />
 
         {/* Background Music */}
         <div className="space-y-4">
