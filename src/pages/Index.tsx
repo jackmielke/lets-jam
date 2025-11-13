@@ -741,6 +741,19 @@ const Index = () => {
           timingType={currentTimingType}
         />
 
+        {/* Background Music */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-center">Background Music</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <BackgroundMusicUpload onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)} />
+            <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
+            <MusicMetadataEditor musicFiles={musicFiles} onSaved={() => {
+              toast.success("Metadata saved!");
+              setMusicRefreshTrigger(prev => prev + 1);
+            }} />
+          </div>
+        </div>
+
         {/* Battle Mode */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -776,19 +789,6 @@ const Index = () => {
 
           {/* Hidden audio element for synced music */}
           {battleMusicUrl && <audio ref={battleAudioRef} src={battleMusicUrl} preload="auto" />}
-        </div>
-
-        {/* Background Music */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-center">Background Music</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <BackgroundMusicUpload onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)} />
-            <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
-            <MusicMetadataEditor musicFiles={musicFiles} onSaved={() => {
-              toast.success("Metadata saved!");
-              setMusicRefreshTrigger(prev => prev + 1);
-            }} />
-          </div>
         </div>
 
         {/* Audio Samples */}
