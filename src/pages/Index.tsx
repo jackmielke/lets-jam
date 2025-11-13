@@ -727,9 +727,6 @@ const Index = () => {
         {/* Lick Library */}
         <LickLibrary licks={licks} onDelete={handleDeleteLick} onDemonstrate={handleDemonstrateLick} onEdit={handleEditLick} onUpdateDifficulty={handleUpdateDifficulty} editingLickId={editingLickId} />
 
-        {/* Lick Sequencer */}
-        <LickSequencer availableLicks={licks} onPlaySequence={handlePlaySequence} isPlaying={isPlayingSequence} />
-
         {/* Lick Editor */}
         <LickEditor 
           notes={recordedNotes} 
@@ -790,6 +787,9 @@ const Index = () => {
           {/* Hidden audio element for synced music */}
           {battleMusicUrl && <audio ref={battleAudioRef} src={battleMusicUrl} preload="auto" />}
         </div>
+
+        {/* Lick Sequencer */}
+        <LickSequencer availableLicks={licks} onPlaySequence={handlePlaySequence} isPlaying={isPlayingSequence} />
 
         {/* Audio Samples */}
         <div className="space-y-4">
