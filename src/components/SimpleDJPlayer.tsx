@@ -3,16 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Pause, SkipBack } from "lucide-react";
 import { toast } from "sonner";
 import WaveSurfer from "wavesurfer.js";
+import { supabase } from "@/integrations/supabase/client";
+
+interface MusicFile {
+  name: string;
+  path: string;
+  url: string;
+  title?: string;
+}
 
 interface SimpleDJPlayerProps {
   audioUrl?: string;
   trackName?: string;
+  onTrackSelect?: (url: string, title: string) => void;
 }
 
-export const SimpleDJPlayer = ({ audioUrl, trackName }: SimpleDJPlayerProps) => {
+export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTrackName, onTrackSelect }: SimpleDJPlayerProps) => {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -23,6 +33,66 @@ export const SimpleDJPlayer = ({ audioUrl, trackName }: SimpleDJPlayerProps) => 
   const [eqHigh, setEqHigh] = useState([50]);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [musicFiles, setMusicFiles] = useState<MusicFile[]>([]);
+  const [selectedTrackUrl, setSelectedTrackUrl] = useState<string>(initialAudioUrl || "");
+  const [selectedTrackName, setSelectedTrackName] = useState<string>(initialTrackName || "");
+
+  // Load available music files
+  useEffect(() => {
+    loadMusicFiles();
+  }, []);
+
+  const loadMusicFiles = async () => {
+    try {
+      const { data, error } = await supabase.storage.from("background-music").list();
+
+      if (error) throw error;
+
+      // Load metadata
+      const { data: metadataData } = await supabase
+        .from("background_music_metadata")
+        .select("*");
+
+      if (data) {
+        const files: MusicFile[] = await Promise.all(
+          data.map(async (file) => {
+            const { data: urlData } = supabase.storage
+              .from("background-music")
+              .getPublicUrl(file.name);
+
+            // Find metadata for this file
+            const metadata = metadataData?.find((m) => m.file_name === file.name);
+
+            return {
+              name: file.name,
+              path: file.name,
+              url: urlData.publicUrl,
+              title: metadata?.title || file.name,
+            };
+          })
+        );
+        setMusicFiles(files);
+      }
+    } catch (error) {
+      console.error("Error loading music files:", error);
+      toast.error("Failed to load music files");
+    }
+  };
+
+  const handleTrackSelect = (url: string) => {
+    const selectedFile = musicFiles.find(f => f.url === url);
+    if (selectedFile) {
+      setSelectedTrackUrl(url);
+      setSelectedTrackName(selectedFile.title || selectedFile.name);
+      setIsPlaying(false);
+      if (onTrackSelect) {
+        onTrackSelect(url, selectedFile.title || selectedFile.name);
+      }
+    }
+  };
+
+  const audioUrl = selectedTrackUrl || initialAudioUrl;
+  const trackName = selectedTrackName || initialTrackName;
 
   // Initialize WaveSurfer
   useEffect(() => {
@@ -113,6 +183,23 @@ export const SimpleDJPlayer = ({ audioUrl, trackName }: SimpleDJPlayerProps) => 
 
   return (
     <Card className="p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/30">
+      {/* Track Selector */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Select Track</Label>
+        <Select value={selectedTrackUrl} onValueChange={handleTrackSelect}>
+          <SelectTrigger className="w-full bg-background">
+            <SelectValue placeholder="Choose a track to play..." />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            {musicFiles.map((file) => (
+              <SelectItem key={file.url} value={file.url}>
+                {file.title || file.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Track Info */}
       <div className="text-center">
         <h3 className="text-2xl font-bold text-primary mb-1">
