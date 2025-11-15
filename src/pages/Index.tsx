@@ -688,36 +688,10 @@ const Index = () => {
               <p className="text-muted-foreground">Visualize and control your music with intuitive controls</p>
             </div>
             
-            <div className="space-y-8">
-              <SimpleDJPlayer 
-                audioUrl={backgroundMusicUrl || undefined}
-                trackName={backgroundMusicUrl ? "Selected Track" : undefined}
-              />
-
-              {/* Play Along Section */}
-              <div className="space-y-4">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-foreground">Play Along</h3>
-                  <p className="text-sm text-muted-foreground">Use your keyboard to jam with the track</p>
-                </div>
-
-                {/* Instrument Mode Selector for DJ Tab */}
-                <Tabs value={instrumentMode} onValueChange={(v) => setInstrumentMode(v as "piano" | "drums" | "dj")} className="w-full">
-                  <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-                    <TabsTrigger value="piano">Piano</TabsTrigger>
-                    <TabsTrigger value="drums">Drums</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="piano" className="mt-6">
-                    <DrumGrid sounds={pianoSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
-                  </TabsContent>
-                  
-                  <TabsContent value="drums" className="mt-6">
-                    <DrumPadGrid sounds={drumPadSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
+            <SimpleDJPlayer 
+              audioUrl={backgroundMusicUrl || undefined}
+              trackName={backgroundMusicUrl ? "Selected Track" : undefined}
+            />
           </TabsContent>
         </Tabs>
 
