@@ -50,7 +50,7 @@ const Index = () => {
   } = useAudioEngine();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
-  const [instrumentMode, setInstrumentMode] = useState<"piano" | "drums">("piano");
+  const [instrumentMode, setInstrumentMode] = useState<"piano" | "drums" | "dj">("piano");
   const [metronomeBpm, setMetronomeBpm] = useState(120);
   const [currentStep, setCurrentStep] = useState(0);
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
@@ -681,10 +681,11 @@ const Index = () => {
         </div>
 
         {/* Instrument Mode Tabs */}
-        <Tabs value={instrumentMode} onValueChange={(v) => setInstrumentMode(v as "piano" | "drums")} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+        <Tabs value={instrumentMode} onValueChange={(v) => setInstrumentMode(v as "piano" | "drums" | "dj")} className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
             <TabsTrigger value="piano">Piano</TabsTrigger>
             <TabsTrigger value="drums">Drums</TabsTrigger>
+            <TabsTrigger value="dj">DJ Deck</TabsTrigger>
           </TabsList>
           
           <TabsContent value="piano" className="mt-6">
@@ -693,6 +694,53 @@ const Index = () => {
           
           <TabsContent value="drums" className="mt-6">
             <DrumPadGrid sounds={drumPadSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
+          </TabsContent>
+          
+          <TabsContent value="dj" className="mt-6">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DJDeck 
+                  deckLabel="A"
+                  sampleUrl={backgroundMusicUrl || undefined}
+                  isPlaying={deckAPlaying}
+                  onPlayPause={() => setDeckAPlaying(!deckAPlaying)}
+                  volume={deckAVolume}
+                  onVolumeChange={setDeckAVolume}
+                  tempo={deckATempo}
+                  onTempoChange={setDeckATempo}
+                  eqLow={deckAEqLow}
+                  eqMid={deckAEqMid}
+                  eqHigh={deckAEqHigh}
+                  onEqChange={(type, value) => {
+                    if (type === 'low') setDeckAEqLow(value);
+                    if (type === 'mid') setDeckAEqMid(value);
+                    if (type === 'high') setDeckAEqHigh(value);
+                  }}
+                />
+                <DJDeck 
+                  deckLabel="B"
+                  sampleUrl={battleMusicUrl || undefined}
+                  isPlaying={deckBPlaying}
+                  onPlayPause={() => setDeckBPlaying(!deckBPlaying)}
+                  volume={deckBVolume}
+                  onVolumeChange={setDeckBVolume}
+                  tempo={deckBTempo}
+                  onTempoChange={setDeckBTempo}
+                  eqLow={deckBEqLow}
+                  eqMid={deckBEqMid}
+                  eqHigh={deckBEqHigh}
+                  onEqChange={(type, value) => {
+                    if (type === 'low') setDeckBEqLow(value);
+                    if (type === 'mid') setDeckBEqMid(value);
+                    if (type === 'high') setDeckBEqHigh(value);
+                  }}
+                />
+              </div>
+              <DJCrossfader 
+                value={crossfaderValue}
+                onChange={setCrossfaderValue}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="dj" className="space-y-6">
