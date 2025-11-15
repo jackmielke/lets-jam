@@ -31,6 +31,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DJDeck } from "@/components/DJDeck";
+import { DJCrossfader } from "@/components/DJCrossfader";
 import { Save, Trash } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +99,22 @@ const Index = () => {
     duration_seconds: number | null;
   } | null>(null);
   const [battleMusicUrl, setBattleMusicUrl] = useState<string | null>(null);
+  const [backgroundMusicUrl, setBackgroundMusicUrl] = useState<string | null>(null);
+
+  // DJ Deck state
+  const [deckAPlaying, setDeckAPlaying] = useState(false);
+  const [deckBPlaying, setDeckBPlaying] = useState(false);
+  const [deckAVolume, setDeckAVolume] = useState(75);
+  const [deckBVolume, setDeckBVolume] = useState(75);
+  const [deckATempo, setDeckATempo] = useState(100);
+  const [deckBTempo, setDeckBTempo] = useState(100);
+  const [deckAEqLow, setDeckAEqLow] = useState(50);
+  const [deckAEqMid, setDeckAEqMid] = useState(50);
+  const [deckAEqHigh, setDeckAEqHigh] = useState(50);
+  const [deckBEqLow, setDeckBEqLow] = useState(50);
+  const [deckBEqMid, setDeckBEqMid] = useState(50);
+  const [deckBEqHigh, setDeckBEqHigh] = useState(50);
+  const [crossfaderValue, setCrossfaderValue] = useState(50);
 
   // Metronome for rhythm tracking
   const metronome = useMetronome({
@@ -676,6 +694,64 @@ const Index = () => {
           <TabsContent value="drums" className="mt-6">
             <DrumPadGrid sounds={drumPadSounds} onPlaySound={handlePlaySound} pressedKeyId={pressedKeyId} />
           </TabsContent>
+
+          <TabsContent value="dj" className="space-y-6">
+            <div className="text-center space-y-2 mb-8">
+              <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                DJ Deck Mode
+              </h2>
+              <p className="text-muted-foreground">Mix tracks with dual turntables and crossfader</p>
+            </div>
+
+            {/* Dual Deck Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DJDeck
+                sampleUrl={backgroundMusicUrl}
+                deckLabel="DECK A"
+                isPlaying={deckAPlaying}
+                onPlayPause={() => setDeckAPlaying(!deckAPlaying)}
+                volume={deckAVolume}
+                onVolumeChange={setDeckAVolume}
+                tempo={deckATempo}
+                onTempoChange={setDeckATempo}
+                eqLow={deckAEqLow}
+                eqMid={deckAEqMid}
+                eqHigh={deckAEqHigh}
+                onEqChange={(type, value) => {
+                  if (type === 'low') setDeckAEqLow(value);
+                  else if (type === 'mid') setDeckAEqMid(value);
+                  else setDeckAEqHigh(value);
+                }}
+              />
+
+              <DJDeck
+                sampleUrl={battleMusicUrl}
+                deckLabel="DECK B"
+                isPlaying={deckBPlaying}
+                onPlayPause={() => setDeckBPlaying(!deckBPlaying)}
+                volume={deckBVolume}
+                onVolumeChange={setDeckBVolume}
+                tempo={deckBTempo}
+                onTempoChange={setDeckBTempo}
+                eqLow={deckBEqLow}
+                eqMid={deckBEqMid}
+                eqHigh={deckBEqHigh}
+                onEqChange={(type, value) => {
+                  if (type === 'low') setDeckBEqLow(value);
+                  else if (type === 'mid') setDeckBEqMid(value);
+                  else setDeckBEqHigh(value);
+                }}
+              />
+            </div>
+
+            {/* Crossfader */}
+            <div className="max-w-2xl mx-auto">
+              <DJCrossfader
+                value={crossfaderValue}
+                onChange={setCrossfaderValue}
+              />
+            </div>
+          </TabsContent>
         </Tabs>
 
         {/* Metronome, Recording & Score */}
@@ -743,7 +819,10 @@ const Index = () => {
           <h3 className="text-xl font-semibold text-center">Background Music</h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <BackgroundMusicUpload onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)} />
-            <BackgroundMusicPlayer refreshTrigger={musicRefreshTrigger} />
+            <BackgroundMusicPlayer 
+              refreshTrigger={musicRefreshTrigger}
+              onSelectFile={(url) => setBackgroundMusicUrl(url)}
+            />
             <MusicMetadataEditor musicFiles={musicFiles} onSaved={() => {
               toast.success("Metadata saved!");
               setMusicRefreshTrigger(prev => prev + 1);

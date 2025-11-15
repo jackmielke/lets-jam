@@ -18,13 +18,15 @@ interface BackgroundMusicPlayerProps {
   audioRef?: React.RefObject<HTMLAudioElement>;
   syncMode?: boolean;
   autoPlay?: boolean;
+  onSelectFile?: (url: string) => void;
 }
 
 export const BackgroundMusicPlayer = ({ 
   refreshTrigger, 
   audioRef: externalAudioRef,
   syncMode = false,
-  autoPlay = false
+  autoPlay = false,
+  onSelectFile
 }: BackgroundMusicPlayerProps) => {
   const [musicFiles, setMusicFiles] = useState<MusicFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>("");
@@ -107,6 +109,10 @@ export const BackgroundMusicPlayer = ({
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+    }
+    const fileObj = musicFiles.find((f) => f.path === filePath);
+    if (fileObj && onSelectFile) {
+      onSelectFile(fileObj.url);
     }
   };
 
