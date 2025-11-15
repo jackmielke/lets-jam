@@ -31,7 +31,9 @@ export const BackgroundMusicUpload = ({ onUploadComplete }: BackgroundMusicUploa
     setIsUploading(true);
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const originalName = file.name.replace(`.${fileExt}`, "");
+      const timestamp = Date.now();
+      const fileName = `${timestamp}_${file.name}`;
       const filePath = fileName;
 
       const { error: uploadError } = await supabase.storage
@@ -39,6 +41,20 @@ export const BackgroundMusicUpload = ({ onUploadComplete }: BackgroundMusicUploa
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
+
+      // Create metadata entry with the original filename as title
+      const { error: metadataError } = await supabase
+        .from("background_music_metadata")
+        .insert({
+          title: originalName,
+          file_name: fileName,
+          original_bpm: 120, // Default BPM
+        });
+
+      if (metadataError) {
+        console.error("Metadata error:", metadataError);
+        // Don't fail the upload if metadata fails
+      }
 
       toast.success("Music uploaded successfully!");
       onUploadComplete();

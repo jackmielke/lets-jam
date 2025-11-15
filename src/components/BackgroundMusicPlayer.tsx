@@ -4,13 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, Volume2, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Play, Pause, Volume2, Trash2, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface MusicFile {
   name: string;
   path: string;
   url: string;
+  title?: string;
+  metadataId?: string;
 }
 
 interface BackgroundMusicPlayerProps {
@@ -33,6 +36,8 @@ export const BackgroundMusicPlayer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [playbackRate, setPlaybackRate] = useState([100]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const internalAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioRef = externalAudioRef || internalAudioRef;
 
@@ -42,6 +47,11 @@ export const BackgroundMusicPlayer = ({
 
       if (error) throw error;
 
+      // Load metadata
+      const { data: metadataData } = await supabase
+        .from("background_music_metadata")
+        .select("*");
+
       if (data) {
         const files: MusicFile[] = await Promise.all(
           data.map(async (file) => {
@@ -49,10 +59,15 @@ export const BackgroundMusicPlayer = ({
               .from("background-music")
               .getPublicUrl(file.name);
 
+            // Find metadata for this file
+            const metadata = metadataData?.find((m) => m.file_name === file.name);
+
             return {
               name: file.name,
               path: file.name,
               url: urlData.publicUrl,
+              title: metadata?.title || file.name,
+              metadataId: metadata?.id,
             };
           })
         );
@@ -118,6 +133,15 @@ export const BackgroundMusicPlayer = ({
 
   const handleDelete = async (filePath: string) => {
     try {
+      // Delete metadata first
+      const file = musicFiles.find((f) => f.path === filePath);
+      if (file?.metadataId) {
+        await supabase
+          .from("background_music_metadata")
+          .delete()
+          .eq("file_name", filePath);
+      }
+
       const { error } = await supabase.storage.from("background-music").remove([filePath]);
 
       if (error) throw error;
@@ -134,6 +158,49 @@ export const BackgroundMusicPlayer = ({
     }
   };
 
+  const startEditing = (file: MusicFile) => {
+    setEditingId(file.path);
+    setEditingTitle(file.title || file.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingTitle("");
+  };
+
+  const saveTitle = async (file: MusicFile) => {
+    try {
+      if (file.metadataId) {
+        // Update existing metadata
+        const { error } = await supabase
+          .from("background_music_metadata")
+          .update({ title: editingTitle })
+          .eq("id", file.metadataId);
+
+        if (error) throw error;
+      } else {
+        // Create new metadata
+        const { error } = await supabase
+          .from("background_music_metadata")
+          .insert({
+            title: editingTitle,
+            file_name: file.name,
+            original_bpm: 120,
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("Title updated");
+      setEditingId(null);
+      setEditingTitle("");
+      loadMusicFiles();
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("Failed to update title");
+    }
+  };
+
   const selectedFileObj = musicFiles.find((f) => f.path === selectedFile);
 
   return (
@@ -147,7 +214,7 @@ export const BackgroundMusicPlayer = ({
             <SelectContent>
               {musicFiles.map((file) => (
                 <SelectItem key={file.path} value={file.path}>
-                  {file.name}
+                  {file.title || file.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -162,6 +229,46 @@ export const BackgroundMusicPlayer = ({
             </Button>
           )}
         </div>
+
+        {selectedFileObj && (
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+            {editingId === selectedFileObj.path ? (
+              <>
+                <Input
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  className="flex-1"
+                  placeholder="Track name"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => saveTitle(selectedFileObj)}
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={cancelEditing}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 text-sm font-medium">{selectedFileObj.title || selectedFileObj.name}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => startEditing(selectedFileObj)}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="space-y-4">
           {!syncMode && (
