@@ -8,6 +8,7 @@ import { Play, Pause, SkipBack } from "lucide-react";
 import { toast } from "sonner";
 import WaveSurfer from "wavesurfer.js";
 import { supabase } from "@/integrations/supabase/client";
+import musicLogo from "@/assets/musica.jpg";
 
 interface MusicFile {
   name: string;
@@ -182,7 +183,11 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
   };
 
   return (
-    <Card className="p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/30">
+    <Card className="p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/30 relative overflow-hidden">
+      {/* Decorative Background Logo */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 opacity-5 blur-sm pointer-events-none">
+        <img src={musicLogo} alt="" className="w-full h-full object-contain" />
+      </div>
       {/* Track Selector */}
       <div className="space-y-2">
         <Label className="text-sm font-semibold">Select Track</Label>
