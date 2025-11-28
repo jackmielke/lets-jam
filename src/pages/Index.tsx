@@ -681,19 +681,24 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="dj" className="mt-6">
-            <div className="text-center space-y-2 mb-6">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Audio Player & Controls
-              </h2>
-              <p className="text-muted-foreground">Visualize and control your music with intuitive controls</p>
-            </div>
-            
-            <SimpleDJPlayer 
-              audioUrl={backgroundMusicUrl || undefined}
-              trackName={backgroundMusicUrl ? "Selected Track" : undefined}
-            />
+            {/* Empty placeholder - actual DJ player is rendered below to persist across tabs */}
           </TabsContent>
         </Tabs>
+
+        {/* DJ Player - Always mounted to persist playback across tab changes */}
+        <div className={instrumentMode === "dj" ? "mt-6" : "hidden"}>
+          <div className="text-center space-y-2 mb-6">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Audio Player & Controls
+            </h2>
+            <p className="text-muted-foreground">Visualize and control your music with intuitive controls</p>
+          </div>
+          
+          <SimpleDJPlayer 
+            audioUrl={backgroundMusicUrl || undefined}
+            trackName={backgroundMusicUrl ? "Selected Track" : undefined}
+          />
+        </div>
 
         {/* Metronome, Recording & Score */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
