@@ -26,6 +26,9 @@ interface SimpleDJPlayerProps {
 export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTrackName, onTrackSelect }: SimpleDJPlayerProps) => {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
+  const lowEQRef = useRef<BiquadFilterNode | null>(null);
+  const midEQRef = useRef<BiquadFilterNode | null>(null);
+  const highEQRef = useRef<BiquadFilterNode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [tempo, setTempo] = useState([100]);
@@ -95,7 +98,7 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
   const audioUrl = selectedTrackUrl || initialAudioUrl;
   const trackName = selectedTrackName || initialTrackName;
 
-  // Initialize WaveSurfer
+  // Initialize WaveSurfer with Web Audio API EQ
   useEffect(() => {
     if (!waveformRef.current) return;
 
@@ -109,12 +112,55 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
       cursorWidth: 2,
       height: 120,
       barGap: 2,
+      backend: 'WebAudio',
     });
 
     wavesurferRef.current = wavesurfer;
 
-    wavesurfer.on("ready", () => {
+    // Set up Web Audio API EQ filters when audio is ready
+    wavesurfer.on('ready', () => {
       setDuration(wavesurfer.getDuration());
+      
+      try {
+        // Access the Web Audio backend
+        const backend = (wavesurfer as any).backend;
+        if (!backend || !backend.ac) return;
+
+        const ctx = backend.ac as AudioContext;
+        
+        // Create three-band EQ
+        const lowShelf = ctx.createBiquadFilter();
+        lowShelf.type = 'lowshelf';
+        lowShelf.frequency.value = 200;
+        lowShelf.gain.value = 0;
+
+        const mid = ctx.createBiquadFilter();
+        mid.type = 'peaking';
+        mid.frequency.value = 1000;
+        mid.Q.value = 1;
+        mid.gain.value = 0;
+
+        const highShelf = ctx.createBiquadFilter();
+        highShelf.type = 'highshelf';
+        highShelf.frequency.value = 3000;
+        highShelf.gain.value = 0;
+
+        // Store references
+        lowEQRef.current = lowShelf;
+        midEQRef.current = mid;
+        highEQRef.current = highShelf;
+
+        // Insert filters into the audio chain
+        if (backend.analyser) {
+          backend.analyser.disconnect();
+          backend.analyser.connect(lowShelf);
+          lowShelf.connect(mid);
+          mid.connect(highShelf);
+          highShelf.connect(backend.gainNode || ctx.destination);
+        }
+      } catch (error) {
+        console.error('Error setting up EQ:', error);
+      }
     });
 
     wavesurfer.on("audioprocess", () => {
@@ -158,6 +204,31 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
       wavesurferRef.current.setPlaybackRate(tempo[0] / 100);
     }
   }, [tempo]);
+
+  // Update EQ Low
+  useEffect(() => {
+    if (lowEQRef.current) {
+      // Convert 0-100 to -12dB to +12dB
+      const gain = ((eqLow[0] - 50) / 50) * 12;
+      lowEQRef.current.gain.value = gain;
+    }
+  }, [eqLow]);
+
+  // Update EQ Mid
+  useEffect(() => {
+    if (midEQRef.current) {
+      const gain = ((eqMid[0] - 50) / 50) * 12;
+      midEQRef.current.gain.value = gain;
+    }
+  }, [eqMid]);
+
+  // Update EQ High
+  useEffect(() => {
+    if (highEQRef.current) {
+      const gain = ((eqHigh[0] - 50) / 50) * 12;
+      highEQRef.current.gain.value = gain;
+    }
+  }, [eqHigh]);
 
   const handlePlayPause = () => {
     if (!wavesurferRef.current) return;
