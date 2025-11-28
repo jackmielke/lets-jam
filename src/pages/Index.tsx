@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimpleDJPlayer } from "@/components/SimpleDJPlayer";
 import { Save, Trash } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
+import spaceBackground from "@/assets/space-background.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -593,12 +594,20 @@ const Index = () => {
       toast.info("Paused");
     }
   }, [isPlaying]);
-  return <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 relative overflow-hidden">
-      {/* Subtle background photo */}
-      <div className="fixed inset-0 z-0 opacity-[0.03] bg-cover bg-center bg-no-repeat" style={{
-      backgroundImage: `url(${teamPhoto})`
-    }} />
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-background/95 via-background/90 to-background/95" />
+  return <div className="min-h-screen bg-black text-foreground p-4 sm:p-8 relative overflow-hidden">
+      {/* Cosmic Space Background */}
+      <div className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat" style={{
+        backgroundImage: `url(${spaceBackground})`
+      }} />
+      
+      {/* Subtle pulsing overlay for space atmosphere */}
+      <div className="fixed inset-0 z-0 animate-pulse pointer-events-none" style={{ 
+        animation: 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        background: 'radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)',
+      }} />
+      
+      {/* Gradient overlay for readability */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
       
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         <header className="text-center space-y-4 animate-slide-up">
