@@ -602,7 +602,7 @@ const Index = () => {
       
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         <header className="text-center space-y-4 animate-slide-up">
-          <h1 className="font-display text-5xl sm:text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent">Vibe Jam</h1>
+          <h1 className="font-display text-5xl sm:text-7xl font-normal bg-gradient-primary bg-clip-text text-transparent pb-2 leading-tight">Vibe Hour</h1>
           <p className="text-muted-foreground text-lg">
             {instrumentMode === "piano" ? (
               <>Play using your keyboard: <span className="font-mono font-bold">ASDFGHJKL;'</span> for white keys, <span className="font-mono font-bold">WETUIO</span> for black keys</>
