@@ -16,6 +16,7 @@ import { BattleMusicSelector } from "@/components/BattleMusicSelector";
 import { SampleRecorder } from "@/components/SampleRecorder";
 import { SampleLibrary } from "@/components/SampleLibrary";
 import { BattleMode } from "@/components/BattleMode";
+import { VisualGenerator } from "@/components/VisualGenerator";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useKeyboardMappingDrums } from "@/hooks/useKeyboardMappingDrums";
@@ -50,7 +51,7 @@ const Index = () => {
   } = useAudioEngine();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
-  const [instrumentMode, setInstrumentMode] = useState<"piano" | "drums" | "dj">("piano");
+  const [instrumentMode, setInstrumentMode] = useState<"piano" | "drums" | "dj" | "visuals">("piano");
   const [metronomeBpm, setMetronomeBpm] = useState(120);
   const [currentStep, setCurrentStep] = useState(0);
   const [pressedKeyId, setPressedKeyId] = useState<string | null>(null);
@@ -101,6 +102,7 @@ const Index = () => {
   } | null>(null);
   const [battleMusicUrl, setBattleMusicUrl] = useState<string | null>(null);
   const [backgroundMusicUrl, setBackgroundMusicUrl] = useState<string | null>(null);
+  const [djAnalyser, setDjAnalyser] = useState<AnalyserNode | null>(null);
 
   // Metronome for rhythm tracking
   const metronome = useMetronome({
@@ -701,11 +703,12 @@ const Index = () => {
         </div>
 
         {/* Instrument Mode Tabs */}
-        <Tabs value={instrumentMode} onValueChange={(v) => setInstrumentMode(v as "piano" | "drums" | "dj")} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
+        <Tabs value={instrumentMode} onValueChange={(v) => setInstrumentMode(v as "piano" | "drums" | "dj" | "visuals")} className="w-full">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4">
             <TabsTrigger value="piano">Piano</TabsTrigger>
             <TabsTrigger value="drums">Drums</TabsTrigger>
             <TabsTrigger value="dj">DJ Deck</TabsTrigger>
+            <TabsTrigger value="visuals">Visuals</TabsTrigger>
           </TabsList>
           
           <TabsContent value="piano" className="mt-6">
@@ -718,6 +721,16 @@ const Index = () => {
           
           <TabsContent value="dj" className="mt-6">
             {/* Empty placeholder - actual DJ player is rendered below to persist across tabs */}
+          </TabsContent>
+          
+          <TabsContent value="visuals" className="mt-6">
+            <div className="text-center space-y-2 mb-6">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                Text-to-Visual Party Mode
+              </h2>
+              <p className="text-muted-foreground">Generate AI visuals that react to your music in real-time</p>
+            </div>
+            <VisualGenerator analyser={djAnalyser} />
           </TabsContent>
         </Tabs>
 
@@ -733,6 +746,7 @@ const Index = () => {
           <SimpleDJPlayer 
             audioUrl={backgroundMusicUrl || undefined}
             trackName={backgroundMusicUrl ? "Selected Track" : undefined}
+            onAnalyserReady={setDjAnalyser}
           />
         </div>
 
