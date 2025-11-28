@@ -21,9 +21,10 @@ interface SimpleDJPlayerProps {
   audioUrl?: string;
   trackName?: string;
   onTrackSelect?: (url: string, title: string) => void;
+  onAnalyserReady?: (analyser: AnalyserNode | null) => void;
 }
 
-export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTrackName, onTrackSelect }: SimpleDJPlayerProps) => {
+export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTrackName, onTrackSelect, onAnalyserReady }: SimpleDJPlayerProps) => {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const lowEQRef = useRef<BiquadFilterNode | null>(null);
@@ -161,6 +162,11 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
 
         const ctx = backend.ac as AudioContext;
         
+        // Expose analyser to parent component
+        if (backend.analyser && onAnalyserReady) {
+          onAnalyserReady(backend.analyser);
+        }
+        
         // Create three-band EQ
         const lowShelf = ctx.createBiquadFilter();
         lowShelf.type = 'lowshelf';
@@ -280,6 +286,9 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
     });
 
     return () => {
+      if (onAnalyserReady) {
+        onAnalyserReady(null);
+      }
       wavesurfer.destroy();
     };
   }, []);
