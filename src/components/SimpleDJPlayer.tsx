@@ -29,12 +29,28 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
   const lowEQRef = useRef<BiquadFilterNode | null>(null);
   const midEQRef = useRef<BiquadFilterNode | null>(null);
   const highEQRef = useRef<BiquadFilterNode | null>(null);
+  const filterRef = useRef<BiquadFilterNode | null>(null);
+  const compressorRef = useRef<DynamicsCompressorNode | null>(null);
+  const convolverRef = useRef<ConvolverNode | null>(null);
+  const delayRef = useRef<DelayNode | null>(null);
+  const delayGainRef = useRef<GainNode | null>(null);
+  const reverbGainRef = useRef<GainNode | null>(null);
+  
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [tempo, setTempo] = useState([100]);
   const [eqLow, setEqLow] = useState([50]);
   const [eqMid, setEqMid] = useState([50]);
   const [eqHigh, setEqHigh] = useState([50]);
+  
+  // Audio Effects State
+  const [filterFreq, setFilterFreq] = useState([5000]);
+  const [filterRes, setFilterRes] = useState([0]);
+  const [compressorAmount, setCompressorAmount] = useState([0]);
+  const [delayTime, setDelayTime] = useState([0]);
+  const [delayFeedback, setDelayFeedback] = useState([30]);
+  const [reverbAmount, setReverbAmount] = useState([0]);
+  
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [musicFiles, setMusicFiles] = useState<MusicFile[]>([]);
@@ -145,21 +161,88 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
         highShelf.frequency.value = 3000;
         highShelf.gain.value = 0;
 
+        // Create filter for resonance effects
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 5000;
+        filter.Q.value = 0;
+
+        // Create compressor
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 1;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+
+        // Create reverb (using convolver with impulse response)
+        const convolver = ctx.createConvolver();
+        const reverbGain = ctx.createGain();
+        reverbGain.gain.value = 0;
+
+        // Create delay effect
+        const delay = ctx.createDelay();
+        delay.delayTime.value = 0;
+        const delayGain = ctx.createGain();
+        delayGain.gain.value = 0;
+        const delayFeedbackGain = ctx.createGain();
+        delayFeedbackGain.gain.value = 0.3;
+
+        // Generate simple reverb impulse response
+        const sampleRate = ctx.sampleRate;
+        const length = sampleRate * 2; // 2 seconds
+        const impulse = ctx.createBuffer(2, length, sampleRate);
+        const impulseL = impulse.getChannelData(0);
+        const impulseR = impulse.getChannelData(1);
+        
+        for (let i = 0; i < length; i++) {
+          const decay = Math.pow(1 - i / length, 2);
+          impulseL[i] = (Math.random() * 2 - 1) * decay;
+          impulseR[i] = (Math.random() * 2 - 1) * decay;
+        }
+        convolver.buffer = impulse;
+
         // Store references
         lowEQRef.current = lowShelf;
         midEQRef.current = mid;
         highEQRef.current = highShelf;
+        filterRef.current = filter;
+        compressorRef.current = compressor;
+        convolverRef.current = convolver;
+        reverbGainRef.current = reverbGain;
+        delayRef.current = delay;
+        delayGainRef.current = delayGain;
 
-        // Insert filters into the audio chain
+        // Connect the audio chain:
+        // source -> lowEQ -> midEQ -> highEQ -> filter -> compressor -> destination
+        //                                                  -> delay -> delayGain -> filter (feedback)
+        //                                                  -> convolver -> reverbGain -> destination
         if (backend.analyser) {
           backend.analyser.disconnect();
+          
+          // Main chain
           backend.analyser.connect(lowShelf);
           lowShelf.connect(mid);
           mid.connect(highShelf);
-          highShelf.connect(backend.gainNode || ctx.destination);
+          highShelf.connect(filter);
+          filter.connect(compressor);
+          
+          // Delay chain (parallel)
+          compressor.connect(delay);
+          delay.connect(delayGain);
+          delayGain.connect(delay); // feedback
+          delayGain.connect(compressor);
+          
+          // Reverb chain (parallel)
+          compressor.connect(convolver);
+          convolver.connect(reverbGain);
+          reverbGain.connect(ctx.destination);
+          
+          // Main output
+          compressor.connect(backend.gainNode || ctx.destination);
         }
       } catch (error) {
-        console.error('Error setting up EQ:', error);
+        console.error('Error setting up audio effects:', error);
       }
     });
 
@@ -229,6 +312,52 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
       highEQRef.current.gain.value = gain;
     }
   }, [eqHigh]);
+
+  // Update Filter Frequency
+  useEffect(() => {
+    if (filterRef.current) {
+      filterRef.current.frequency.value = filterFreq[0];
+    }
+  }, [filterFreq]);
+
+  // Update Filter Resonance
+  useEffect(() => {
+    if (filterRef.current) {
+      filterRef.current.Q.value = filterRes[0];
+    }
+  }, [filterRes]);
+
+  // Update Compressor
+  useEffect(() => {
+    if (compressorRef.current) {
+      const ratio = 1 + (compressorAmount[0] / 100) * 19; // 1 to 20
+      compressorRef.current.ratio.value = ratio;
+    }
+  }, [compressorAmount]);
+
+  // Update Delay Time
+  useEffect(() => {
+    if (delayRef.current && delayGainRef.current) {
+      delayRef.current.delayTime.value = delayTime[0];
+      // Adjust delay gain based on delay time
+      delayGainRef.current.gain.value = delayTime[0] > 0 ? 0.5 : 0;
+    }
+  }, [delayTime]);
+
+  // Update Delay Feedback
+  useEffect(() => {
+    if (delayGainRef.current && delayTime[0] > 0) {
+      const feedback = delayFeedback[0] / 100;
+      delayGainRef.current.gain.value = feedback * 0.7; // Max 0.7 to prevent runaway feedback
+    }
+  }, [delayFeedback, delayTime]);
+
+  // Update Reverb Amount
+  useEffect(() => {
+    if (reverbGainRef.current) {
+      reverbGainRef.current.gain.value = reverbAmount[0] / 100;
+    }
+  }, [reverbAmount]);
 
   const handlePlayPause = () => {
     if (!wavesurferRef.current) return;
@@ -401,6 +530,117 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
             <Slider
               value={eqHigh}
               onValueChange={setEqHigh}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Audio Effects Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
+        {/* Filter & Compression */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-secondary uppercase tracking-wide">
+            Filter & Dynamics
+          </h4>
+          
+          {/* Filter Frequency */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label className="text-sm">Filter Cutoff</Label>
+              <span className="text-xs font-mono text-secondary">{filterFreq[0]}Hz</span>
+            </div>
+            <Slider
+              value={filterFreq}
+              onValueChange={setFilterFreq}
+              min={200}
+              max={20000}
+              step={100}
+              className="w-full"
+            />
+          </div>
+
+          {/* Filter Resonance */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label className="text-sm">Resonance</Label>
+              <span className="text-xs font-mono text-secondary">{filterRes[0].toFixed(1)}</span>
+            </div>
+            <Slider
+              value={filterRes}
+              onValueChange={setFilterRes}
+              min={0}
+              max={20}
+              step={0.1}
+              className="w-full"
+            />
+          </div>
+
+          {/* Compressor */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label className="text-sm">Compressor</Label>
+              <span className="text-xs font-mono text-secondary">{compressorAmount[0]}%</span>
+            </div>
+            <Slider
+              value={compressorAmount}
+              onValueChange={setCompressorAmount}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Time-Based Effects */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-accent uppercase tracking-wide">
+            Time Effects
+          </h4>
+          
+          {/* Delay Time */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label className="text-sm">Delay Time</Label>
+              <span className="text-xs font-mono text-accent">{(delayTime[0] * 1000).toFixed(0)}ms</span>
+            </div>
+            <Slider
+              value={delayTime}
+              onValueChange={setDelayTime}
+              min={0}
+              max={1}
+              step={0.01}
+              className="w-full"
+            />
+          </div>
+
+          {/* Delay Feedback */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label className="text-sm">Delay Feedback</Label>
+              <span className="text-xs font-mono text-accent">{delayFeedback[0]}%</span>
+            </div>
+            <Slider
+              value={delayFeedback}
+              onValueChange={setDelayFeedback}
+              max={100}
+              step={1}
+              className="w-full"
+              disabled={delayTime[0] === 0}
+            />
+          </div>
+
+          {/* Reverb */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label className="text-sm">Reverb</Label>
+              <span className="text-xs font-mono text-accent">{reverbAmount[0]}%</span>
+            </div>
+            <Slider
+              value={reverbAmount}
+              onValueChange={setReverbAmount}
               max={100}
               step={1}
               className="w-full"
