@@ -35,6 +35,7 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
   const delayRef = useRef<DelayNode | null>(null);
   const delayGainRef = useRef<GainNode | null>(null);
   const reverbGainRef = useRef<GainNode | null>(null);
+  const shouldAutoPlayRef = useRef<boolean>(false);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState([70]);
@@ -104,6 +105,7 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
     if (musicFiles.length > 0 && !selectedTrackUrl) {
       const randomIndex = Math.floor(Math.random() * musicFiles.length);
       const randomTrack = musicFiles[randomIndex];
+      shouldAutoPlayRef.current = true;
       handleTrackSelect(randomTrack.url);
     }
   }, [musicFiles, selectedTrackUrl]);
@@ -145,6 +147,12 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
     // Set up Web Audio API EQ filters when audio is ready
     wavesurfer.on('ready', () => {
       setDuration(wavesurfer.getDuration());
+      
+      // Auto-play if this was the initial random selection
+      if (shouldAutoPlayRef.current) {
+        shouldAutoPlayRef.current = false;
+        wavesurfer.play();
+      }
       
       try {
         // Access the Web Audio backend
