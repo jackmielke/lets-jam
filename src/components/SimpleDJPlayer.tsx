@@ -99,6 +99,15 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
     }
   };
 
+  // Auto-select a random track when music files are loaded
+  useEffect(() => {
+    if (musicFiles.length > 0 && !selectedTrackUrl) {
+      const randomIndex = Math.floor(Math.random() * musicFiles.length);
+      const randomTrack = musicFiles[randomIndex];
+      handleTrackSelect(randomTrack.url);
+    }
+  }, [musicFiles, selectedTrackUrl]);
+
   const handleTrackSelect = (url: string) => {
     const selectedFile = musicFiles.find(f => f.url === url);
     if (selectedFile) {
