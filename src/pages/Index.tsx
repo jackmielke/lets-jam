@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimpleDJPlayer } from "@/components/SimpleDJPlayer";
-import { Save, Trash } from "lucide-react";
+import { Save, Trash, Rocket } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 import spaceBackground from "@/assets/space-background.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +63,7 @@ const Index = () => {
   const [musicRefreshTrigger, setMusicRefreshTrigger] = useState(0);
   const [sampleRefreshTrigger, setSampleRefreshTrigger] = useState(0);
   const [currentTimingType, setCurrentTimingType] = useState<'straight' | 'swing'>('straight');
+  const [spaceMode, setSpaceMode] = useState(false);
   const [selectedMusicFile, setSelectedMusicFile] = useState<{
     name: string;
     path: string;
@@ -595,22 +596,48 @@ const Index = () => {
     }
   }, [isPlaying]);
   return <div className="min-h-screen bg-black text-foreground p-4 sm:p-8 relative overflow-hidden">
-      {/* Cosmic Space Background */}
-      <div className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat" style={{
-        backgroundImage: `url(${spaceBackground})`
-      }} />
-      
-      {/* Subtle pulsing overlay for space atmosphere */}
-      <div className="fixed inset-0 z-0 animate-pulse pointer-events-none" style={{ 
-        animation: 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        background: 'radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)',
-      }} />
-      
-      {/* Gradient overlay for readability */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
+      {/* Space Mode Toggle Button */}
+      <button
+        onClick={() => setSpaceMode(!spaceMode)}
+        className={`fixed top-4 right-4 z-50 p-3 rounded-full transition-all duration-300 backdrop-blur-sm border ${
+          spaceMode 
+            ? 'bg-primary/20 border-primary text-primary shadow-glow-primary' 
+            : 'bg-card/50 border-border text-muted-foreground hover:text-primary hover:border-primary'
+        }`}
+        title={spaceMode ? "Exit Space Mode" : "Enter Space Mode"}
+      >
+        <Rocket className={`w-6 h-6 transition-transform duration-300 ${spaceMode ? 'rotate-45' : ''}`} />
+      </button>
+
+      {/* Conditional Backgrounds */}
+      {spaceMode ? (
+        <>
+          {/* Cosmic Space Background */}
+          <div className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat" style={{
+            backgroundImage: `url(${spaceBackground})`
+          }} />
+          
+          {/* Subtle pulsing overlay for space atmosphere */}
+          <div className="fixed inset-0 z-0 animate-pulse pointer-events-none" style={{ 
+            animation: 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            background: 'radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)',
+          }} />
+          
+          {/* Gradient overlay for readability */}
+          <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
+        </>
+      ) : (
+        <>
+          {/* Original subtle background */}
+          <div className="fixed inset-0 z-0 opacity-[0.03] bg-cover bg-center bg-no-repeat" style={{
+            backgroundImage: `url(${teamPhoto})`
+          }} />
+          <div className="fixed inset-0 z-0 bg-gradient-to-b from-background/95 via-background/90 to-background/95" />
+        </>
+      )}
       
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        <header className="text-center space-y-4 animate-float-slow">
+        <header className={`text-center space-y-4 ${spaceMode ? 'animate-float-slow' : 'animate-slide-up'}`}>
           <h1 className="font-display text-5xl sm:text-7xl font-normal bg-gradient-primary bg-clip-text text-transparent pb-2 leading-tight">Vibe Hour</h1>
           <p className="text-muted-foreground text-lg">
             {instrumentMode === "piano" ? (
@@ -622,8 +649,8 @@ const Index = () => {
         </header>
 
         {/* Latency Monitor */}
-        <div className="flex justify-center mb-4 animate-float">
-          <div className="inline-flex items-center gap-4 px-4 py-2 rounded-lg bg-card border border-border backdrop-blur-sm">
+        <div className={`flex justify-center mb-4 ${spaceMode ? 'animate-float' : ''}`}>
+          <div className={`inline-flex items-center gap-4 px-4 py-2 rounded-lg bg-card border border-border ${spaceMode ? 'backdrop-blur-sm' : ''}`}>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Key Handler:</span>
               <span className={`text-xs font-mono font-bold ${latencyStats.keyHandler > 5 ? 'text-yellow-500' : 'text-green-500'}`}>
@@ -648,7 +675,7 @@ const Index = () => {
         </div>
 
         {/* Instrument Selector */}
-        <div className="space-y-2 animate-float-delayed">
+        <div className={`space-y-2 ${spaceMode ? 'animate-float-delayed' : ''}`}>
           <div className="flex justify-center items-center gap-3">
             <span className="text-sm text-muted-foreground">Audio System:</span>
             {isReady ? <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-500 font-medium">
@@ -695,7 +722,7 @@ const Index = () => {
         </Tabs>
 
         {/* DJ Player - Always mounted to persist playback across tab changes */}
-        <div className={instrumentMode === "dj" ? "mt-6 animate-drift" : "hidden"}>
+        <div className={instrumentMode === "dj" ? `mt-6 ${spaceMode ? 'animate-drift' : ''}` : "hidden"}>
           <div className="text-center space-y-2 mb-6">
             <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Audio Player & Controls
@@ -711,11 +738,11 @@ const Index = () => {
 
         {/* Metronome, Recording & Score */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="space-y-4 animate-float">
+          <div className={`space-y-4 ${spaceMode ? 'animate-float' : ''}`}>
             <Metronome isPlaying={metronome.isPlaying} currentBeat={metronome.currentBeat} beatsPerBar={4} bpm={metronomeBpm} onToggle={metronome.toggle} onBpmChange={setMetronomeBpm} />
             
             {/* Timing Type Toggle */}
-            <Card className="p-4 backdrop-blur-sm">
+            <Card className={`p-4 ${spaceMode ? 'backdrop-blur-sm' : ''}`}>
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Recording Mode:</Label>
                 <div className="flex gap-2">
@@ -739,7 +766,7 @@ const Index = () => {
               </div>
             </Card>
           </div>
-          <div className="space-y-4 animate-float-delayed">
+          <div className={`space-y-4 ${spaceMode ? 'animate-float-delayed' : ''}`}>
             <RecordingDisplay notes={recordedNotes} isRecording={metronome.isPlaying} />
             {recordedNotes.length > 0 && !editingLickId && <div className="flex gap-2">
                 <Input placeholder="Lick name..." value={lickName} onChange={e => setLickName(e.target.value)} className="flex-1" />
@@ -756,12 +783,12 @@ const Index = () => {
         </div>
 
         {/* Lick Library */}
-        <div className="animate-float">
+        <div className={spaceMode ? 'animate-float' : ''}>
           <LickLibrary licks={licks} onDelete={handleDeleteLick} onDemonstrate={handleDemonstrateLick} onEdit={handleEditLick} onUpdateDifficulty={handleUpdateDifficulty} editingLickId={editingLickId} />
         </div>
 
         {/* Lick Editor */}
-        <div className="animate-drift">
+        <div className={spaceMode ? 'animate-drift' : ''}>
           <LickEditor
           notes={recordedNotes} 
           onUpdateNote={handleUpdateNote} 
@@ -774,7 +801,7 @@ const Index = () => {
         </div>
 
         {/* Background Music */}
-        <div className="space-y-4 animate-float-slow">
+        <div className={`space-y-4 ${spaceMode ? 'animate-float-slow' : ''}`}>
           <h3 className="text-xl font-semibold text-center">Background Music</h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <BackgroundMusicUpload onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)} />
@@ -790,7 +817,7 @@ const Index = () => {
         </div>
 
         {/* Battle Mode */}
-        <div className="space-y-4 animate-float-delayed">
+        <div className={`space-y-4 ${spaceMode ? 'animate-float-delayed' : ''}`}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <BattleMusicSelector
               battleBPM={metronomeBpm} 
@@ -827,12 +854,12 @@ const Index = () => {
         </div>
 
         {/* Lick Sequencer */}
-        <div className="animate-drift">
+        <div className={spaceMode ? 'animate-drift' : ''}>
           <LickSequencer availableLicks={licks} onPlaySequence={handlePlaySequence} isPlaying={isPlayingSequence} />
         </div>
 
         {/* Audio Samples */}
-        <div className="space-y-4 animate-float">
+        <div className={`space-y-4 ${spaceMode ? 'animate-float' : ''}`}>
           <h3 className="text-xl font-semibold text-center">Audio Samples</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <SampleRecorder onSampleSaved={() => setSampleRefreshTrigger(prev => prev + 1)} />
@@ -841,7 +868,7 @@ const Index = () => {
         </div>
 
         {/* Sequencer Controls */}
-        <div className="space-y-4 animate-float-slow">
+        <div className={`space-y-4 ${spaceMode ? 'animate-float-slow' : ''}`}>
           <h3 className="text-xl font-semibold text-center">Pattern Sequencer</h3>
           <Controls isPlaying={isPlaying} onPlayPause={handlePlayPause} onClear={handleClear} tempo={tempo} onTempoChange={setTempo} />
 
