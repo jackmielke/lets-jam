@@ -23,10 +23,18 @@ const PRESET_MOODS = [
   { name: "Crystal Cave", prompt: "glowing crystal cave with prismatic light reflections" },
 ];
 
+interface ImageHistory {
+  id: string;
+  prompt: string;
+  imageUrl: string;
+  timestamp: number;
+}
+
 export const VisualGenerator = ({ analyser }: VisualGeneratorProps) => {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [imageHistory, setImageHistory] = useState<ImageHistory[]>([]);
   const [intensity, setIntensity] = useState([50]);
   const [enablePulse, setEnablePulse] = useState(true);
   const [enableKaleidoscope, setEnableKaleidoscope] = useState(false);
@@ -94,11 +102,21 @@ export const VisualGenerator = ({ analyser }: VisualGeneratorProps) => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = "source-over";
 
-      // Glow effect (volume-reactive)
+      // Enhanced glow effect (volume-reactive with bloom)
       if (enableGlow) {
-        const glowIntensity = volume * 40 * intensityFactor;
-        ctx.shadowBlur = glowIntensity;
-        ctx.shadowColor = `rgba(${255 * bass}, ${255 * mids}, ${255 * highs}, 0.8)`;
+        const glowIntensity = (volume * 60 + 20) * intensityFactor;
+        const beatBoost = beat ? 30 : 0;
+        
+        // Multi-layer glow for bloom effect
+        ctx.shadowBlur = glowIntensity + beatBoost;
+        ctx.shadowColor = `rgba(${255 * bass}, ${150 + 105 * mids}, ${255 * highs}, ${0.7 + volume * 0.3})`;
+        
+        // Draw image again with glow
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+        
+        // Add outer glow layer
+        ctx.shadowBlur = (glowIntensity + beatBoost) * 1.5;
+        ctx.shadowColor = `rgba(${200 * bass}, ${100 + 155 * mids}, ${200 * highs}, ${0.4 + volume * 0.2})`;
       }
 
       // Kaleidoscope effect
@@ -158,6 +176,16 @@ export const VisualGenerator = ({ analyser }: VisualGeneratorProps) => {
       img.onload = () => {
         imageRef.current = img;
         setCurrentImage(data.imageUrl);
+        
+        // Add to history
+        const historyItem: ImageHistory = {
+          id: Date.now().toString(),
+          prompt: promptToUse,
+          imageUrl: data.imageUrl,
+          timestamp: Date.now(),
+        };
+        setImageHistory(prev => [historyItem, ...prev].slice(0, 10)); // Keep last 10
+        
         toast.success("Visual generated!");
       };
       img.onerror = () => {
@@ -186,6 +214,18 @@ export const VisualGenerator = ({ analyser }: VisualGeneratorProps) => {
         toast.error("Failed to enter fullscreen: " + err.message);
       });
     }
+  };
+
+  const loadHistoryImage = (historyItem: ImageHistory) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      imageRef.current = img;
+      setCurrentImage(historyItem.imageUrl);
+      setPrompt(historyItem.prompt);
+      toast.success("Loaded from history");
+    };
+    img.src = historyItem.imageUrl;
   };
 
   return (
@@ -286,6 +326,33 @@ export const VisualGenerator = ({ analyser }: VisualGeneratorProps) => {
           Fullscreen Party Mode
         </Button>
       </div>
+
+      {imageHistory.length > 0 && (
+        <div className="space-y-3">
+          <Label className="text-sm font-semibold">Visual History</Label>
+          <div className="grid grid-cols-5 gap-2">
+            {imageHistory.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => loadHistoryImage(item)}
+                className="relative aspect-square rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-all group"
+                title={item.prompt}
+              >
+                <img
+                  src={item.imageUrl}
+                  alt={item.prompt}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-xs text-white text-center px-1 line-clamp-2">
+                    {item.prompt}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
