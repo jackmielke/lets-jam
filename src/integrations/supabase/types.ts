@@ -136,6 +136,98 @@ export type Database = {
         }
         Relationships: []
       }
+      track_recordings: {
+        Row: {
+          bpm: number
+          created_at: string
+          duration: number
+          id: string
+          notes: Json
+          start_time: number
+          timing_type: string
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          bpm: number
+          created_at?: string
+          duration: number
+          id?: string
+          notes: Json
+          start_time?: number
+          timing_type?: string
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          bpm?: number
+          created_at?: string
+          duration?: number
+          id?: string
+          notes?: Json
+          start_time?: number
+          timing_type?: string
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_recordings_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracks: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          instrument_type: string
+          is_muted: boolean
+          is_soloed: boolean
+          name: string
+          order_index: number
+          pan: number
+          project_id: string | null
+          updated_at: string
+          user_id: string | null
+          volume: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          instrument_type?: string
+          is_muted?: boolean
+          is_soloed?: boolean
+          name?: string
+          order_index?: number
+          pan?: number
+          project_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          volume?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          instrument_type?: string
+          is_muted?: boolean
+          is_soloed?: boolean
+          name?: string
+          order_index?: number
+          pan?: number
+          project_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          volume?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
