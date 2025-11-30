@@ -17,6 +17,7 @@ import { SampleRecorder } from "@/components/SampleRecorder";
 import { SampleLibrary } from "@/components/SampleLibrary";
 import { BattleMode } from "@/components/BattleMode";
 import { VisualGenerator } from "@/components/VisualGenerator";
+import { MultiTrackTimeline } from "@/components/MultiTrackTimeline";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { useKeyboardMapping } from "@/hooks/useKeyboardMapping";
 import { useKeyboardMappingDrums } from "@/hooks/useKeyboardMappingDrums";
@@ -870,6 +871,17 @@ const Index = () => {
         {/* Lick Sequencer */}
         <div className={spaceMode ? 'animate-drift' : ''}>
           <LickSequencer availableLicks={licks} onPlaySequence={handlePlaySequence} isPlaying={isPlayingSequence} />
+        </div>
+
+        {/* Multi-Track Timeline */}
+        <div className={spaceMode ? 'animate-float' : ''}>
+          <MultiTrackTimeline
+            onPlaySound={handlePlaySound}
+            currentBpm={metronomeBpm}
+            isMetronomeActive={metronome.isPlaying}
+            recordedNotes={recordedNotes}
+            onClearRecording={handleClearRecording}
+          />
         </div>
 
         {/* Audio Samples */}
