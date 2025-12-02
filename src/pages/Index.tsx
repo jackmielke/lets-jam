@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimpleDJPlayer } from "@/components/SimpleDJPlayer";
 import { SpotifyImporter } from "@/components/SpotifyImporter";
+import { SpotifyNowPlaying } from "@/components/SpotifyNowPlaying";
 import { Save, Trash, Rocket } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 import spaceBackground from "@/assets/space-background.png";
@@ -743,6 +744,11 @@ const Index = () => {
               Audio Player & Controls
             </h2>
             <p className="text-muted-foreground">Visualize and control your music with intuitive controls</p>
+          </div>
+          
+          {/* Spotify Now Playing Widget */}
+          <div className="mb-6">
+            <SpotifyNowPlaying />
           </div>
           
           <SimpleDJPlayer 

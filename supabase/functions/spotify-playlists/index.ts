@@ -53,6 +53,32 @@ serve(async (req) => {
       });
     }
 
+    if (action === 'getCurrentlyPlaying') {
+      const response = await fetch('https://api.spotify.com/v1/me/player', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.status === 204) {
+        // Nothing is currently playing
+        return new Response(JSON.stringify({ isPlaying: false }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const data = await response.json();
+      console.log('Get currently playing response:', { success: response.ok, isPlaying: data.is_playing });
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Failed to fetch currently playing');
+      }
+
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     throw new Error('Invalid action');
 
   } catch (error) {
