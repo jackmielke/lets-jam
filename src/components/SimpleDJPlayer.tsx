@@ -101,12 +101,11 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
     }
   };
 
-  // Auto-select a random track when music files are loaded
+  // Auto-select a random track when music files are loaded (without auto-play)
   useEffect(() => {
     if (musicFiles.length > 0 && !selectedTrackUrl) {
       const randomIndex = Math.floor(Math.random() * musicFiles.length);
       const randomTrack = musicFiles[randomIndex];
-      shouldAutoPlayRef.current = true;
       handleTrackSelect(randomTrack.url);
     }
   }, [musicFiles, selectedTrackUrl]);
@@ -148,12 +147,6 @@ export const SimpleDJPlayer = ({ audioUrl: initialAudioUrl, trackName: initialTr
     // Set up Web Audio API EQ filters when audio is ready
     wavesurfer.on('ready', () => {
       setDuration(wavesurfer.getDuration());
-      
-      // Auto-play if this was the initial random selection
-      if (shouldAutoPlayRef.current) {
-        shouldAutoPlayRef.current = false;
-        wavesurfer.play();
-      }
       
       try {
         // Access the Web Audio backend
