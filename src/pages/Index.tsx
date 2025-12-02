@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimpleDJPlayer } from "@/components/SimpleDJPlayer";
+import { SpotifyImporter } from "@/components/SpotifyImporter";
 import { Save, Trash, Rocket } from "lucide-react";
 import teamPhoto from "@/assets/team-photo.jpeg";
 import spaceBackground from "@/assets/space-background.png";
@@ -818,6 +819,10 @@ const Index = () => {
         {/* Background Music */}
         <div className={`space-y-4 ${spaceMode ? 'animate-float-slow' : ''}`}>
           <h3 className="text-xl font-semibold text-center">Background Music</h3>
+          
+          {/* Spotify Importer */}
+          <SpotifyImporter />
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <BackgroundMusicUpload onUploadComplete={() => setMusicRefreshTrigger(prev => prev + 1)} />
             <BackgroundMusicPlayer 
